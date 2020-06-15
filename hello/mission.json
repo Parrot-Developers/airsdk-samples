@@ -1,0 +1,12 @@
+{
+	"uid": "com.parrot.missions.samples.hello",
+	"name": "Hello mission",
+	"desc": "This is a simple 'Hello' mission",
+	"version": "0.0.1",
+	"target_model_id": "091A",
+	"target_min_version": "0.0.0",
+	"target_max_version": "99.99.99",
+	"services" : [
+		["cv", "ms_sample", "arg1", "arg2"]
+	]
+}
