@@ -10,7 +10,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := airsdk-hello-files
 LOCAL_DESCRIPTION := AirSdk Hello mission files
-LOCAL_CATEGORY_PATH := airsdk/hello
+LOCAL_CATEGORY_PATH := airsdk/mission/samples/hello
 
 LOCAL_COPY_FILES += mission.json:$(airsdk-hello.mission-dir)/
 
@@ -22,13 +22,16 @@ $(foreach __f,$(call all-files-under,guidance/python,.py), \
 	$(eval LOCAL_COPY_FILES += $(__f):$(airsdk-hello.payload-dir)/$(__f)) \
 )
 
+LOCAL_LIBRARIES := airsdk-hello-cv-service
+
 include $(BUILD_CUSTOM)
 
 # Build and copy missions services
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := ms_sample
-LOCAL_DESTDIR := $(airsdk-hello.payload-dir)/services
+LOCAL_MODULE := airsdk-hello-cv-service
+LOCAL_CATEGORY_PATH := airsdk/mission/samples/hello
+LOCAL_DESTDIR := $(airsdk-hello.payload-dir)/services/bin
 
 LOCAL_SRC_FILES := services/native/sample.cpp
 
