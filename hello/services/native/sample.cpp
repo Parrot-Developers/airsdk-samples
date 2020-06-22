@@ -22,7 +22,7 @@ ULOG_DECLARE_TAG(ULOG_TAG);
 #include <video-ipc/vipc_client_cfg.h>
 #include <opencv2/opencv.hpp>
 
-#define VIPC_DISP_MAP_STREAM	"fstcam_stereo_disparity_filtered"
+#define VIPC_DISP_MAP_STREAM	"fstcam_stereo_depth_filtered"
 #define TLM_SECTION_USER	"drone_controller"
 #define TLM_SECTION_OUT		"ms_sample"
 #define TLM_SECTION_OUT_RATE	1000
@@ -53,7 +53,7 @@ struct tlm_data_in {
 struct tlm_data_out {
 	struct {
 		float x, y, z;
-		float disp_mean;
+		float depth_mean;
 		float confidence;
 	} algo;
 };
@@ -82,7 +82,7 @@ struct context {
 	struct vipc_dim frame_dim;
 
 	/* Depth frame */
-	cv::Mat disp_frame;
+	cv::Mat depth_frame;
 
 	/* Mask frame */
 	cv::Mat mask_frame;
@@ -115,7 +115,7 @@ static const struct tlm_reg_field s_tlm_data_out_fields[] = {
 	TLM_REG_FIELD_SCALAR(struct tlm_data_out, algo.x, TLM_TYPE_FLOAT32),
 	TLM_REG_FIELD_SCALAR(struct tlm_data_out, algo.y, TLM_TYPE_FLOAT32),
 	TLM_REG_FIELD_SCALAR(struct tlm_data_out, algo.z, TLM_TYPE_FLOAT32),
-	TLM_REG_FIELD_SCALAR(struct tlm_data_out, algo.disp_mean,
+	TLM_REG_FIELD_SCALAR(struct tlm_data_out, algo.depth_mean,
 			TLM_TYPE_FLOAT32),
 	TLM_REG_FIELD_SCALAR(struct tlm_data_out, algo.confidence,
 			TLM_TYPE_FLOAT32),
@@ -215,7 +215,7 @@ static void frame_cb(struct vipcc_ctx *ctx,
 	struct context *ud = (struct context *)userdata;
 	int i, j;
 	struct timespec ts;
-	float disp_mean;
+	float depth_mean;
 	int res = 0;
 
 	ULOGD("received frame %08x", frame->index);
@@ -242,17 +242,17 @@ static void frame_cb(struct vipcc_ctx *ctx,
 		goto out;
 	}
 
-	ud->disp_frame = cv::Mat(ud->frame_dim.width, ud->frame_dim.height,
+	ud->depth_frame = cv::Mat(ud->frame_dim.width, ud->frame_dim.height,
 			CV_32F, (void *)frame->planes[0].virt_addr,
 			frame->planes[0].stride);
 
 	ud->mask_frame.setTo(1);
-	for (i = 0; i < ud->disp_frame.rows; ++i)
-		for (j = 0; j < ud->disp_frame.cols; ++j)
-			if (ud->disp_frame.at<float>(i, j) == -1.f)
+	for (i = 0; i < ud->depth_frame.rows; ++i)
+		for (j = 0; j < ud->depth_frame.cols; ++j)
+			if (ud->depth_frame.at<float>(i, j) == -1.f)
 				ud->mask_frame.at<uint8_t>(i, j) = 0;
 
-	disp_mean = (float)cv::mean(ud->disp_frame, ud->mask_frame).val[0];
+	depth_mean = (float)cv::mean(ud->depth_frame, ud->mask_frame).val[0];
 
 	/* Save timestamp of the frame */
 	ts.tv_sec = frame->ts_sof_ns / 1000000000UL;
@@ -268,7 +268,7 @@ static void frame_cb(struct vipcc_ctx *ctx,
 	ud->tlm_data_out.algo.x = ud->tlm_data_in.position_absolute.x;
 	ud->tlm_data_out.algo.y = ud->tlm_data_in.position_absolute.y;
 	ud->tlm_data_out.algo.z = ud->tlm_data_in.position_absolute.z;
-	ud->tlm_data_out.algo.disp_mean = disp_mean;
+	ud->tlm_data_out.algo.depth_mean = depth_mean;
 	ud->tlm_data_out.algo.confidence = 1.f;
 
 out:
