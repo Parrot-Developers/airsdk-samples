@@ -33,7 +33,7 @@ GROUND_STAGE = {
     'initial': 'idle',
     'children': [
         child for child in DEF_GROUND_STAGE['children']
-            if child in _STATES_TO_REMOVE
+            if not child['name'] in _STATES_TO_REMOVE
     ] + [
         IDLE_STATE
     ]
