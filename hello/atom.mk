@@ -1,7 +1,8 @@
 
 LOCAL_PATH := $(call my-dir)
 
-airsdk-hello.uid := com.parrot.missions.samples.hello
+airsdk-hello.name := hello
+airsdk-hello.uid := com.parrot.missions.samples.$(airsdk-hello.name)
 airsdk-hello.mission-dir := missions/$(airsdk-hello.uid)
 airsdk-hello.payload-dir := $(airsdk-hello.mission-dir)/payload
 
@@ -23,6 +24,28 @@ $(foreach __f,$(call all-files-under,guidance/python,.py), \
 )
 
 LOCAL_LIBRARIES := airsdk-hello-cv-service
+
+include $(BUILD_CUSTOM)
+
+# Hello mission protobuf library (Python)
+hello_mission_proto_path := messages/protobuf
+hello_mission_proto_files := \
+	$(call all-files-under,$(hello_mission_proto_path),.proto)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := libmission-airsdk-hello-pbpy
+LOCAL_DESCRIPTION := Protobuf python code for hello mission
+LOCAL_CATEGORY_PATH := airsdk/missions/samples/hello
+LOCAL_LIBRARIES := \
+	protobuf-python
+
+$(foreach __f,$(hello_mission_proto_files), \
+	$(eval LOCAL_CUSTOM_MACROS += $(subst $(space),,protoc-macro:python, \
+		$(TARGET_OUT_STAGING)/$(airsdk-hello.payload-dir)/python/$(airsdk-hello.name), \
+		$(LOCAL_PATH)/$(__f), \
+		$(LOCAL_PATH)/$(hello_mission_proto_path))) \
+)
 
 include $(BUILD_CUSTOM)
 
