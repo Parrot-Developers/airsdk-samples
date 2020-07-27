@@ -21,20 +21,36 @@ class Idle(State):
         m.set_mode.mode = UID + '_ground'
         self.mc.send(m)
 
+@guidance_modes(UID + '_ground')
+class Say(State):
+    def enter(self, msg):
+        m = self.mc.dctl.cmd.alloc()
+        m.set_estimation_mode.mode = cbry_est.MOTORS_STOPPED
+        self.mc.send(m)
+
+        m = self.mc.gdnc.cmd.alloc()
+        m.set_mode.mode = UID + '_ground'
+        self.mc.send(m)
 
 IDLE_STATE = {
     'name': 'idle',
     'class': Idle,
 }
 
+SAY_STATE = {
+    'name': 'say',
+    'class': Say,
+}
+
 GROUND_STAGE = {
     'name': 'ground',
     'class': DEF_GROUND_STAGE['class'],
-    'initial': 'idle',
+    'initial': 'say',
     'children': [
         child for child in DEF_GROUND_STAGE['children']
             if not child['name'] in _STATES_TO_REMOVE
     ] + [
-        IDLE_STATE
+        IDLE_STATE,
+        SAY_STATE
     ]
 }

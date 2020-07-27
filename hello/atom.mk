@@ -23,7 +23,9 @@ $(foreach __f,$(call all-files-under,guidance/python,.py), \
 	$(eval LOCAL_COPY_FILES += $(__f):$(airsdk-hello.payload-dir)/$(__f)) \
 )
 
-LOCAL_LIBRARIES := airsdk-hello-cv-service
+LOCAL_LIBRARIES := \
+	airsdk-hello-cv-service \
+	libmission-airsdk-hello-pbpy
 
 include $(BUILD_CUSTOM)
 

@@ -33,6 +33,12 @@ class Mission(object):
         ]
 
     def transitions(self):
-        return TRANSITIONS
+        return TRANSITIONS + DEF_TRANSITIONS
 
-TRANSITIONS = DEF_TRANSITIONS
+
+hext = "ComParrotMissionsSamplesHello."
+
+TRANSITIONS = [
+    [hext+'say',                        'ground.idle',                          'ground.say'],
+    [hext+'say',                        'ground.say',                           'ground.idle'],
+]
