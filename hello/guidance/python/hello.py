@@ -8,6 +8,7 @@ import cam_controller.control_mode_pb2 as cam_cm_pb2
 
 import guidance.core as gdnc_core
 import guidance.guidance_pb2 as guidance_pb
+import hello.guidance.hello_ground_mode_pb2 as ground_mode_pb
 
 
 class HelloGroundMode(gdnc_core.Mode):
@@ -35,6 +36,8 @@ class HelloGroundMode(gdnc_core.Mode):
         self.timer = \
             libpomp.pomp_timer_new(self.loop, self.timer_cb, None)
 
+        self.say = False
+
     def shutdown(self):
         self.loop = None
         self.msghub = None
@@ -47,7 +50,14 @@ class HelloGroundMode(gdnc_core.Mode):
     def get_triggers(self):
         return (gdnc_core.Trigger.TIMER, 30, 30)
 
-    def enter(self):
+    def configure(self, msg, disable_oa):
+        if not msg.type_url.endswith('/Guidance.HelloGroundMode.Messages.Config'):
+            raise ValueError("Ground: unexpected config: %s" % msg.type_url)
+
+        ground_mode_msg = ground_mode_pb.Config()
+        msg.Unpack(ground_mode_msg)
+        self.say = ground_mode_msg.say
+
         self.output_config.has_front_cam_config = True
         self.output_config.front_cam_config.yaw.locked = True
         self.output_config.front_cam_config.yaw.filtered = False
@@ -55,9 +65,14 @@ class HelloGroundMode(gdnc_core.Mode):
         self.output_config.front_cam_config.roll.filtered = False
         self.output_config.front_cam_config.pitch.locked = True
         self.output_config.front_cam_config.pitch.filtered = False
-        libpomp.pomp_timer_set_periodic(self.timer, \
-            HelloGroundMode.FCAM_PITCH_ANIMATION_PERIOD_MS, \
-            HelloGroundMode.FCAM_PITCH_ANIMATION_PERIOD_MS)
+
+        if self.say:
+            libpomp.pomp_timer_set_periodic(self.timer, \
+                HelloGroundMode.FCAM_PITCH_ANIMATION_PERIOD_MS, \
+                HelloGroundMode.FCAM_PITCH_ANIMATION_PERIOD_MS)
+
+    def enter(self):
+        pass
 
     def exit(self):
         pass

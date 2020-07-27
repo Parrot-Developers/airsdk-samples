@@ -25,6 +25,7 @@ $(foreach __f,$(call all-files-under,guidance/python,.py), \
 
 LOCAL_LIBRARIES := \
 	airsdk-hello-cv-service \
+	libguidance-airsdk-hello-pbpy \
 	libmission-airsdk-hello-pbpy
 
 include $(BUILD_CUSTOM)
@@ -47,6 +48,30 @@ $(foreach __f,$(hello_mission_proto_files), \
 		$(TARGET_OUT_STAGING)/$(airsdk-hello.payload-dir)/python/$(airsdk-hello.name), \
 		$(LOCAL_PATH)/$(__f), \
 		$(LOCAL_PATH)/$(hello_mission_proto_path))) \
+)
+
+include $(BUILD_CUSTOM)
+
+# Hello guidance protobuf library (Python)
+hello_guidance_proto_path := guidance/protobuf
+hello_guidance_proto_files := \
+	$(call all-files-under,$(hello_guidance_proto_path),.proto)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := libguidance-airsdk-hello-pbpy
+LOCAL_DESCRIPTION := Protobuf python code for hello guidance
+LOCAL_CATEGORY_PATH := airsdk/missions/samples/hello
+LOCAL_LIBRARIES := \
+	protobuf-python
+
+LOCAL_EXPORT_C_INCLUDES := $(call local-get-build-dir)/gen
+
+$(foreach __f,$(hello_guidance_proto_files), \
+	$(eval LOCAL_CUSTOM_MACROS += $(subst $(space),,protoc-macro:python, \
+		$(TARGET_OUT_STAGING)/$(airsdk-hello.payload-dir)/python/$(airsdk-hello.name), \
+		$(LOCAL_PATH)/$(__f), \
+		$(LOCAL_PATH)/$(hello_guidance_proto_path))) \
 )
 
 include $(BUILD_CUSTOM)

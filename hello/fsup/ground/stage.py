@@ -1,6 +1,7 @@
 
 from fsup.genstate import (State, guidance_modes)
 import colibrylite.estimation_mode_pb2 as cbry_est
+import hello.guidance.hello_ground_mode_pb2 as HelloGroundMode
 
 from fsup.missions.default.ground.stage import GROUND_STAGE as DEF_GROUND_STAGE
 
@@ -19,6 +20,7 @@ class Idle(State):
 
         m = self.mc.gdnc.cmd.alloc()
         m.set_mode.mode = UID + '_ground'
+        m.set_mode.config.Pack(HelloGroundMode.Config(say=False))
         self.mc.send(m)
 
 @guidance_modes(UID + '_ground')
@@ -30,6 +32,7 @@ class Say(State):
 
         m = self.mc.gdnc.cmd.alloc()
         m.set_mode.mode = UID + '_ground'
+        m.set_mode.config.Pack(HelloGroundMode.Config(say=True))
         self.mc.send(m)
 
 IDLE_STATE = {
