@@ -23,7 +23,6 @@ class HelloGroundMode(gdnc_core.Mode):
         super().__init__(guidance, name)
         self.loop = self.guidance.get_loop()
         self.msghub =  self.guidance.get_message_hub()
-        self.config = self.guidance.get_config()
         self.front_cam_pitch_index = 0
 
         subset = ['attitude_euler_angles.yaw',
@@ -36,16 +35,22 @@ class HelloGroundMode(gdnc_core.Mode):
         self.timer = \
             libpomp.pomp_timer_new(self.loop, self.timer_cb, None)
 
+        self.channel = \
+            self.guidance.get_channel(gdnc_core.ChannelKind.GUIDANCE)
+        self.evt_sender = \
+            gdnc_core.MessageSender("Guidance.HelloGroundMode.Messages.Event")
+
         self.say = False
+        self.say_count = 0
 
     def shutdown(self):
         self.loop = None
         self.msghub = None
-        self.config = None
         self.tlm_dctl = None
         libpomp.pomp_timer_destroy(self.timer)
         self.timer_cb = None
         self.timer = None
+        self.evt_sender = None
 
     def get_triggers(self):
         return (gdnc_core.Trigger.TIMER, 30, 30)
@@ -70,12 +75,13 @@ class HelloGroundMode(gdnc_core.Mode):
             libpomp.pomp_timer_set_periodic(self.timer, \
                 HelloGroundMode.FCAM_PITCH_ANIMATION_PERIOD_MS, \
                 HelloGroundMode.FCAM_PITCH_ANIMATION_PERIOD_MS)
+            self.say_count = 0
 
     def enter(self):
-        pass
+        self.msghub.attach_message_sender(self.evt_sender, self.channel)
 
     def exit(self):
-        pass
+        self.msghub.detach_message_sender(self.evt_sender)
 
     def begin_step(self):
         self.tlm_dctl.fetch_sample()
@@ -126,6 +132,11 @@ class HelloGroundMode(gdnc_core.Mode):
     def _timer_cb(self):
         self.log.info("Hello world")
         self.front_cam_pitch_index = 0
+        self.say_count += 1
+
+        msg = ground_mode_pb.Event()
+        msg.count = self.say_count
+        gdnc_core.msghub_send(self.evt_sender, msg)
 
 GUIDANCE_MODES = {
     'com.parrot.missions.samples.hello_ground' : HelloGroundMode
