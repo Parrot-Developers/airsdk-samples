@@ -11,7 +11,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := airsdk-hello-files
 LOCAL_DESCRIPTION := AirSdk Hello mission files
-LOCAL_CATEGORY_PATH := airsdk/mission/samples/hello
+LOCAL_CATEGORY_PATH := airsdk/missions/samples/hello
 
 LOCAL_COPY_FILES += mission.json:$(airsdk-hello.mission-dir)/
 
@@ -80,7 +80,7 @@ include $(BUILD_CUSTOM)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := airsdk-hello-cv-service
-LOCAL_CATEGORY_PATH := airsdk/mission/samples/hello
+LOCAL_CATEGORY_PATH := airsdk/missions/samples/hello
 LOCAL_DESTDIR := $(airsdk-hello.payload-dir)/services/bin
 
 LOCAL_SRC_FILES := services/native/sample.cpp
