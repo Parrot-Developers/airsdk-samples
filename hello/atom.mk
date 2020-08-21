@@ -91,6 +91,6 @@ LOCAL_LIBRARIES := \
 	libulog \
 	libvideo-ipc \
 	libvideo-ipc-client-config \
-	opencv
+	opencv4
 
 include $(BUILD_EXECUTABLE)
