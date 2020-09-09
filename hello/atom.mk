@@ -22,7 +22,7 @@ $(foreach __f,$(call all-files-under,fsup,.py), \
 )
 
 $(foreach __f,$(call all-files-under,guidance/python,.py), \
-	$(eval LOCAL_COPY_FILES += $(__f):$(airsdk-hello.payload-dir)/$(__f)) \
+	$(eval LOCAL_COPY_FILES += $(__f):$(airsdk-hello.payload-dir)/guidance/$(notdir $(__f))) \
 )
 
 LOCAL_LIBRARIES := \
