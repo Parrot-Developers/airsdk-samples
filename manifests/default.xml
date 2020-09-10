@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
- <remote name="gerrit" fetch="ssh://gerrit-doc.parrot.biz" review="gerrit-doc.parrot.biz"/>
+ <remote fetch="ssh://git@github.com/Parrot-Developers" name="github"/>
 
-    <default remote="gerrit" revision="master" upstream="master" sync-j="4"/>
+    <default remote="github" revision="master" upstream="master" sync-j="4"/>
 
     <!-- dragon build  -->
-    <project name="build/Alchemy" path="build/alchemy"/>
-    <project name="drones/dragon_build" path="build/dragon_build">
+    <project name="alchemy" path="build/alchemy"/>
+    <project name="dragon_build" path="build/dragon_build">
         <linkfile src="root-build.sh" dest="build.sh"/>
     </project>
 
