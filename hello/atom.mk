@@ -13,7 +13,7 @@ LOCAL_MODULE := airsdk-hello-files
 LOCAL_DESCRIPTION := AirSdk Hello mission files
 LOCAL_CATEGORY_PATH := airsdk/missions/samples/hello
 
-# Required for non stanalone build
+# Required for integrated build
 LOCAL_COPY_FILES += \
 	product/common/skel/$(airsdk-hello.mission-dir)/mission.json:$(airsdk-hello.mission-dir)/
 
