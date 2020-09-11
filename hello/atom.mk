@@ -13,6 +13,10 @@ LOCAL_MODULE := airsdk-hello-files
 LOCAL_DESCRIPTION := AirSdk Hello mission files
 LOCAL_CATEGORY_PATH := airsdk/missions/samples/hello
 
+# Required for non stanalone build
+LOCAL_COPY_FILES += \
+	product/common/skel/$(airsdk-hello.mission-dir)/mission.json:$(airsdk-hello.mission-dir)/
+
 $(foreach __f,$(call all-files-under,fsup,.py), \
 	$(eval LOCAL_COPY_FILES += $(__f):$(airsdk-hello.payload-dir)/$(__f)) \
 )
