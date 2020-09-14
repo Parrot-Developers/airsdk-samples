@@ -63,13 +63,13 @@ class HelloGroundMode(gdnc_core.Mode):
         msg.Unpack(ground_mode_msg)
         self.say = ground_mode_msg.say
 
-        self.output_config.has_front_cam_config = True
-        self.output_config.front_cam_config.yaw.locked = True
-        self.output_config.front_cam_config.yaw.filtered = False
-        self.output_config.front_cam_config.roll.locked = True
-        self.output_config.front_cam_config.roll.filtered = False
-        self.output_config.front_cam_config.pitch.locked = True
-        self.output_config.front_cam_config.pitch.filtered = False
+        self.output.has_front_cam_config = True
+        self.output.front_cam_config.yaw.locked = True
+        self.output.front_cam_config.yaw.filtered = False
+        self.output.front_cam_config.roll.locked = True
+        self.output.front_cam_config.roll.filtered = False
+        self.output.front_cam_config.pitch.locked = True
+        self.output.front_cam_config.pitch.filtered = False
 
         if self.say:
             libpomp.pomp_timer_set_periodic(self.timer, \
