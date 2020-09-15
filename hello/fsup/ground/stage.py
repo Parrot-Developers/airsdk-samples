@@ -1,10 +1,10 @@
-
 from fsup.genstate import (State, guidance_modes)
 import colibrylite.estimation_mode_pb2 as cbry_est
-import hello.guidance.hello_ground_mode_pb2 as HelloGroundMode
-import hello.messages.com_parrot_mission_samples_hello_pb2 as HelloMessages
 
 from fsup.missions.default.ground.stage import GROUND_STAGE as DEF_GROUND_STAGE
+import hello.guidance.hello_ground_mode_pb2 as HelloGroundMode
+
+import fsup.services.events as events
 
 from ..mission import UID
 
@@ -36,15 +36,20 @@ class Say(State):
         m.set_mode.config.Pack(HelloGroundMode.Config(say=True))
         self.mc.send(m)
 
-    def exit(self, msg):
-        self.mc.detach_client_service_pair(self.gdnc_grd_svc)
-        self.gdnc_grd_svc = None
-
+    # Since we defined a self-transition on the "count" message, the
+    # state machine will call the step method with that kind of
+    # message.
     def step(self, msg):
+        self.log.warning("step: %s", msg)
+        # It is a good practice to check the kind of message received
+        # in case there are multiple events that can trigger the step.
         msgname = msg.WhichOneof('id')
-        if msgname == "count" and isinstance(msg, HelloGroundMode.Event):
-            #TODO: send HelloMessages event count.
-            self.log.info('%s', msg)
+        if msgname == "count":
+            svc = self.mission.hello_svc.evt
+            evt = svc.alloc()
+            evt.count = msg.count
+            self.log.info('count event: msg=%s evt=%s', msg, evt)
+            svc.send(evt)
 
 IDLE_STATE = {
     'name': 'idle',
