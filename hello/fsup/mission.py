@@ -12,9 +12,10 @@ from .ground.stage import GROUND_STAGE
 from .flying.stage import FLYING_STAGE
 
 class Mission(object):
-    def __init__(self, supervisor):
-        self.supervisor = supervisor
-        self.mc = supervisor.mc
+    def __init__(self, mission_environment):
+        self.env = mission_environment
+        self.mc = self.env.mc
+        self.log = logging.getLogger()
 
     def on_activate(self):
         pass
