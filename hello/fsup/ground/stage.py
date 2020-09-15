@@ -27,11 +27,6 @@ class Idle(State):
 @guidance_modes(UID + '_ground')
 class Say(State):
     def enter(self, msg):
-        self.gdnc_grd_svc = self.mc.attach_client_service_pair(
-            self.mc.gdnc_channel,
-            HelloGroundMode,
-            forward_events=True)
-
         m = self.mc.dctl.cmd.alloc()
         m.set_estimation_mode.mode = cbry_est.MOTORS_STOPPED
         self.mc.send(m)
