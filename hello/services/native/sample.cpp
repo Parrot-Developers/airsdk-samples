@@ -284,9 +284,10 @@ conn_status_cb(struct vipcc_ctx *ctx, bool connected, void *userdata)
 	ULOGI("connected: %d", connected);
 }
 
-static void eos_cb(struct vipcc_ctx *ctx, void *userdata)
+static void
+eos_cb(struct vipcc_ctx *ctx, enum vipc_eos_reason reason, void *userdata)
 {
-	ULOGI("eos received");
+	ULOGI("eos received: %s (%u)", vipc_eos_reason_to_str(reason), reason);
 }
 
 static struct vipcc_cb client_cbs = {.status_cb = status_cb,
