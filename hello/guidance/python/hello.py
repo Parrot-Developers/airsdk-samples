@@ -72,16 +72,27 @@ class HelloGroundMode(gdnc_core.Mode):
         self.output.front_cam_config.pitch.filtered = False
 
         if self.say:
-            libpomp.pomp_timer_set_periodic(self.timer, \
-                HelloGroundMode.FCAM_PITCH_ANIMATION_PERIOD_MS, \
-                HelloGroundMode.FCAM_PITCH_ANIMATION_PERIOD_MS)
+            libpomp.pomp_timer_set_periodic(
+                self.timer,
+                # the initial delay (phase) is close to zero, in order
+                # to start the animation right away, but not zero
+                # because that would deactivate the timer.
+                1,
+                HelloGroundMode.FCAM_PITCH_ANIMATION_PERIOD_MS
+            )
             self.say_count = 0
+        else:
+            # clear the timer here, because the mode might be
+            # reconfigured (set_mode with the same mode), in which
+            # case exit() is not called
+            libpomp.pomp_timer_clear(self.timer)
 
     def enter(self):
         self.msghub.attach_message_sender(self.evt_sender, self.channel)
 
     def exit(self):
         self.msghub.detach_message_sender(self.evt_sender)
+        libpomp.pomp_timer_clear(self.timer)
 
     def begin_step(self):
         self.tlm_dctl.fetch_sample()
