@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package Guidance.HelloGroundMode.Messages;
+package parrot.missions.samples.hello.guidance;
 
 // Ground mode configuration
 message Config {

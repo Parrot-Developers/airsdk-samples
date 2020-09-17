@@ -1,12 +1,26 @@
-
 LOCAL_PATH := $(call my-dir)
 
 airsdk-hello.name := hello
-airsdk-hello.uid := com.parrot.missions.samples.$(airsdk-hello.name)
+airsdk-hello.uid := parrot.missions.samples.$(airsdk-hello.name)
+airsdk-hello.uid-as-tree := $(subst .,/,$(airsdk-hello.uid))
 airsdk-hello.mission-dir := missions/$(airsdk-hello.uid)
 airsdk-hello.payload-dir := $(airsdk-hello.mission-dir)/payload
 
+airsdk-hello.fsup-dir        := $(airsdk-hello.payload-dir)/fsup
+airsdk-hello.guidance-dir    := $(airsdk-hello.payload-dir)/guidance
+airsdk-hello.pb-python-dir   := $(airsdk-hello.payload-dir)/python/
+airsdk-hello.pb-src-dir      := messages/protobuf
+
+# Copy all files relative to SOURCE/ that match *.SUFIX into TARGET
+# ($1:SOURCE $2:SUFFIX $3:TARGET)
+
+copy-all-under = $(foreach __f,\
+	$(call all-files-under,$1,$2),\
+	$(eval LOCAL_COPY_FILES += $(__f):$(patsubst $1/%,$3/%,$(__f))))
+
+#############################################################
 # Copy missions files (fsup/guidance python and json)
+
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := airsdk-hello-files
@@ -17,13 +31,8 @@ LOCAL_CATEGORY_PATH := airsdk/missions/samples/hello
 LOCAL_COPY_FILES += \
 	product/common/skel/$(airsdk-hello.mission-dir)/mission.json:$(airsdk-hello.mission-dir)/
 
-$(foreach __f,$(call all-files-under,fsup,.py), \
-	$(eval LOCAL_COPY_FILES += $(__f):$(airsdk-hello.payload-dir)/$(__f)) \
-)
-
-$(foreach __f,$(call all-files-under,guidance/python,.py), \
-	$(eval LOCAL_COPY_FILES += $(__f):$(airsdk-hello.payload-dir)/guidance/$(notdir $(__f))) \
-)
+$(call copy-all-under,autopilot-plugins/fsup,.py,$(airsdk-hello.fsup-dir))
+$(call copy-all-under,autopilot-plugins/guidance/python,.py,$(airsdk-hello.guidance-dir))
 
 LOCAL_LIBRARIES := \
 	airsdk-hello-cv-service \
@@ -32,10 +41,9 @@ LOCAL_LIBRARIES := \
 
 include $(BUILD_CUSTOM)
 
-# Hello mission protobuf library (Python)
-hello_mission_proto_path := messages/protobuf
-hello_mission_proto_files := \
-	$(call all-files-under,$(hello_mission_proto_path),.proto)
+#############################################################
+# Messages exchanged between application and hello mission
+# (python code generated from protobuf)
 
 include $(CLEAR_VARS)
 
@@ -45,19 +53,23 @@ LOCAL_CATEGORY_PATH := airsdk/missions/samples/hello
 LOCAL_LIBRARIES := \
 	protobuf-python
 
+# Hello mission protobuf library (Python)
+hello_mission_proto_path := $(airsdk-hello.pb-src-dir)/$(airsdk-hello.uid-as-tree)/airsdk
+hello_mission_proto_files := \
+	$(call all-files-under,$(hello_mission_proto_path),.proto)
+
 $(foreach __f,$(hello_mission_proto_files), \
 	$(eval LOCAL_CUSTOM_MACROS += $(subst $(space),,protoc-macro:python, \
-		$(TARGET_OUT_STAGING)/$(airsdk-hello.payload-dir)/python/$(airsdk-hello.name), \
+		$(TARGET_OUT_STAGING)/$(airsdk-hello.pb-python-dir), \
 		$(LOCAL_PATH)/$(__f), \
-		$(LOCAL_PATH)/$(hello_mission_proto_path))) \
+		$(LOCAL_PATH)/$(airsdk-hello.pb-src-dir))) \
 )
 
 include $(BUILD_CUSTOM)
 
-# Hello guidance protobuf library (Python)
-hello_guidance_proto_path := guidance/protobuf
-hello_guidance_proto_files := \
-	$(call all-files-under,$(hello_guidance_proto_path),.proto)
+#############################################################
+# Messages exchanged between mission and guidance hello mode
+# (python code generated from protobuf)
 
 include $(CLEAR_VARS)
 
@@ -67,18 +79,23 @@ LOCAL_CATEGORY_PATH := airsdk/missions/samples/hello
 LOCAL_LIBRARIES := \
 	protobuf-python
 
-LOCAL_EXPORT_C_INCLUDES := $(call local-get-build-dir)/gen
+# Hello guidance protobuf library (Python)
+hello_guidance_proto_path := $(airsdk-hello.pb-src-dir)/$(airsdk-hello.uid-as-tree)/guidance
+hello_guidance_proto_files := \
+	$(call all-files-under,$(hello_guidance_proto_path),.proto)
 
 $(foreach __f,$(hello_guidance_proto_files), \
 	$(eval LOCAL_CUSTOM_MACROS += $(subst $(space),,protoc-macro:python, \
-		$(TARGET_OUT_STAGING)/$(airsdk-hello.payload-dir)/python/$(airsdk-hello.name), \
+		$(TARGET_OUT_STAGING)/$(airsdk-hello.pb-python-dir), \
 		$(LOCAL_PATH)/$(__f), \
-		$(LOCAL_PATH)/$(hello_guidance_proto_path))) \
+		$(LOCAL_PATH)/$(airsdk-hello.pb-src-dir))) \
 )
 
 include $(BUILD_CUSTOM)
 
+#############################################################
 # Build and copy missions services
+
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := airsdk-hello-cv-service

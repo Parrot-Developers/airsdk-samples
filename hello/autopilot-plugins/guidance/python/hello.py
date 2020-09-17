@@ -8,8 +8,9 @@ import cam_controller.control_mode_pb2 as cam_cm_pb2
 
 import guidance.core as gdnc_core
 import guidance.guidance_pb2 as guidance_pb
-import hello.guidance.hello_ground_mode_pb2 as ground_mode_pb
 
+import parrot.missions.samples.hello.guidance.messages_pb2 as HelloGroundModeMessages
+CONFIG_SUFFIX = '/' + HelloGroundModeMessages.Config.DESCRIPTOR.full_name
 
 class HelloGroundMode(gdnc_core.Mode):
     FCAM_PITCH_ANIMATION_PERIOD_MS = 5000
@@ -38,7 +39,8 @@ class HelloGroundMode(gdnc_core.Mode):
         self.channel = \
             self.guidance.get_channel(gdnc_core.ChannelKind.GUIDANCE)
         self.evt_sender = \
-            gdnc_core.MessageSender("Guidance.HelloGroundMode.Messages.Event")
+            gdnc_core.MessageSender(
+                HelloGroundModeMessages.Event.DESCRIPTOR.full_name)
 
         self.say = False
         self.say_count = 0
@@ -56,10 +58,10 @@ class HelloGroundMode(gdnc_core.Mode):
         return (gdnc_core.Trigger.TIMER, 30, 30)
 
     def configure(self, msg, disable_oa):
-        if not msg.type_url.endswith('/Guidance.HelloGroundMode.Messages.Config'):
+        if not msg.type_url.endswith(CONFIG_SUFFIX):
             raise ValueError("Ground: unexpected config: %s" % msg.type_url)
 
-        ground_mode_msg = ground_mode_pb.Config()
+        ground_mode_msg = HelloGroundModeMessages.Config()
         msg.Unpack(ground_mode_msg)
         self.say = ground_mode_msg.say
 
@@ -145,10 +147,10 @@ class HelloGroundMode(gdnc_core.Mode):
         self.front_cam_pitch_index = 0
         self.say_count += 1
 
-        msg = ground_mode_pb.Event()
+        msg = HelloGroundModeMessages.Event()
         msg.count = self.say_count
         gdnc_core.msghub_send(self.evt_sender, msg)
 
 GUIDANCE_MODES = {
-    'com.parrot.missions.samples.hello_ground' : HelloGroundMode
+    'parrot.missions.samples.hello.ground' : HelloGroundMode
 }

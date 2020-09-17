@@ -1,6 +1,10 @@
 syntax = "proto3";
 
-package ComParrotMissionsSamplesHello.Messages;
+package parrot.missions.samples.hello.airsdk;
+
+// for the application-side of the mission
+// (ie. "com" prefix + "drone" intermediate package)
+option java_package = "com.parrot.drone.missions.samples.hello.airdsk";
 
 import 'google/protobuf/empty.proto';
 

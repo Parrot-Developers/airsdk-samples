@@ -7,15 +7,17 @@ from fsup.missions.default.critical.stage import CRITICAL_STAGE as DEF_CRITICAL_
 from fsup.missions.default.mission import TRANSITIONS as DEF_TRANSITIONS
 
 # messages exchanged with mission UI code
-import hello.messages.com_parrot_mission_samples_hello_pb2 as HelloMessages
+import parrot.missions.samples.hello.airsdk.messages_pb2 as HelloMessages
 
 # messages exchanged with the guidance mode
-import hello.guidance.hello_ground_mode_pb2 as HelloGroundMode
+import parrot.missions.samples.hello.guidance.messages_pb2 as HelloGroundMode
 
 # events that are not expressed as protobuf messages
 import fsup.services.events as events
 
-UID = "com.parrot.missions.samples.hello"
+UID = "parrot.missions.samples.hello"
+GUIDANCE_MODE = UID + '.ground'
+
 from .ground.stage import GROUND_STAGE
 from .flying.stage import FLYING_STAGE
 

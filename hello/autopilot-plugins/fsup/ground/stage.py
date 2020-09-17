@@ -2,17 +2,17 @@ from fsup.genstate import (State, guidance_modes)
 import colibrylite.estimation_mode_pb2 as cbry_est
 
 from fsup.missions.default.ground.stage import GROUND_STAGE as DEF_GROUND_STAGE
-import hello.guidance.hello_ground_mode_pb2 as HelloGroundMode
+import parrot.missions.samples.hello.guidance.messages_pb2 as HelloGroundMode
 
 import fsup.services.events as events
 
-from ..mission import UID
+from ..mission import GUIDANCE_MODE
 
 _STATES_TO_REMOVE = [
     'idle'
 ]
 
-@guidance_modes(UID + '_ground')
+@guidance_modes(GUIDANCE_MODE)
 class Idle(State):
     def enter(self, msg):
         m = self.mc.dctl.cmd.alloc()
@@ -20,11 +20,11 @@ class Idle(State):
         self.mc.send(m)
 
         m = self.mc.gdnc.cmd.alloc()
-        m.set_mode.mode = UID + '_ground'
+        m.set_mode.mode = GUIDANCE_MODE
         m.set_mode.config.Pack(HelloGroundMode.Config(say=False))
         self.mc.send(m)
 
-@guidance_modes(UID + '_ground')
+@guidance_modes(GUIDANCE_MODE)
 class Say(State):
     def enter(self, msg):
         m = self.mc.dctl.cmd.alloc()
@@ -32,7 +32,7 @@ class Say(State):
         self.mc.send(m)
 
         m = self.mc.gdnc.cmd.alloc()
-        m.set_mode.mode = UID + '_ground'
+        m.set_mode.mode = GUIDANCE_MODE
         m.set_mode.config.Pack(HelloGroundMode.Config(say=True))
         self.mc.send(m)
 
