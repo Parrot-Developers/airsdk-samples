@@ -1,5 +1,5 @@
 {
-	"uid": "parrot.missions.samples.hello",
+	"uid": "com.parrot.missions.samples.hello",
 	"name": "Hello mission",
 	"desc": "This is a simple 'Hello' mission",
 	"version": "0.0.1",

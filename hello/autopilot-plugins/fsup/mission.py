@@ -15,7 +15,7 @@ import parrot.missions.samples.hello.guidance.messages_pb2 as HelloGroundMode
 # events that are not expressed as protobuf messages
 import fsup.services.events as events
 
-UID = "parrot.missions.samples.hello"
+UID = "com.parrot.missions.samples.hello"
 GUIDANCE_MODE = UID + '.ground'
 
 from .ground.stage import GROUND_STAGE

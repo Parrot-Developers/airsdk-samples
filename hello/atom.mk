@@ -1,8 +1,9 @@
 LOCAL_PATH := $(call my-dir)
 
-airsdk-hello.name := hello
-airsdk-hello.uid := parrot.missions.samples.$(airsdk-hello.name)
-airsdk-hello.uid-as-tree := $(subst .,/,$(airsdk-hello.uid))
+airsdk-hello.name        := hello
+airsdk-hello.package     := parrot.missions.samples.$(airsdk-hello.name)
+airsdk-hello.tree        := $(subst .,/,$(airsdk-hello.package))
+airsdk-hello.uid         := com.$(airsdk-hello.package)
 airsdk-hello.mission-dir := missions/$(airsdk-hello.uid)
 airsdk-hello.payload-dir := $(airsdk-hello.mission-dir)/payload
 
@@ -54,7 +55,7 @@ LOCAL_LIBRARIES := \
 	protobuf-python
 
 # Hello mission protobuf library (Python)
-hello_mission_proto_path := $(airsdk-hello.pb-src-dir)/$(airsdk-hello.uid-as-tree)/airsdk
+hello_mission_proto_path := $(airsdk-hello.pb-src-dir)/$(airsdk-hello.tree)/airsdk
 hello_mission_proto_files := \
 	$(call all-files-under,$(hello_mission_proto_path),.proto)
 
@@ -80,7 +81,7 @@ LOCAL_LIBRARIES := \
 	protobuf-python
 
 # Hello guidance protobuf library (Python)
-hello_guidance_proto_path := $(airsdk-hello.pb-src-dir)/$(airsdk-hello.uid-as-tree)/guidance
+hello_guidance_proto_path := $(airsdk-hello.pb-src-dir)/$(airsdk-hello.tree)/guidance
 hello_guidance_proto_files := \
 	$(call all-files-under,$(hello_guidance_proto_path),.proto)
 

@@ -152,5 +152,5 @@ class HelloGroundMode(gdnc_core.Mode):
         gdnc_core.msghub_send(self.evt_sender, msg)
 
 GUIDANCE_MODES = {
-    'parrot.missions.samples.hello.ground' : HelloGroundMode
+    'com.parrot.missions.samples.hello.ground' : HelloGroundMode
 }
