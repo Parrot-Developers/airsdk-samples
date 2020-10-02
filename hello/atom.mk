@@ -10,7 +10,9 @@ airsdk-hello.payload-dir := $(airsdk-hello.mission-dir)/payload
 airsdk-hello.fsup-dir        := $(airsdk-hello.payload-dir)/fsup
 airsdk-hello.guidance-dir    := $(airsdk-hello.payload-dir)/guidance
 airsdk-hello.pb-python-dir   := $(airsdk-hello.payload-dir)/python/
-airsdk-hello.pb-src-dir      := messages/protobuf
+
+airsdk-hello.airsdk-pb-root   := messages/protobuf
+airsdk-hello.guidance-pb-root := autopilot-plugins/guidance/protobuf
 
 # Copy all files relative to SOURCE/ that match *.SUFIX into TARGET
 # ($1:SOURCE $2:SUFFIX $3:TARGET)
@@ -55,7 +57,7 @@ LOCAL_LIBRARIES := \
 	protobuf-python
 
 # Hello mission protobuf library (Python)
-hello_mission_proto_path := $(airsdk-hello.pb-src-dir)/$(airsdk-hello.tree)/airsdk
+hello_mission_proto_path := $(airsdk-hello.airsdk-pb-root)/$(airsdk-hello.tree)/airsdk
 hello_mission_proto_files := \
 	$(call all-files-under,$(hello_mission_proto_path),.proto)
 
@@ -63,7 +65,7 @@ $(foreach __f,$(hello_mission_proto_files), \
 	$(eval LOCAL_CUSTOM_MACROS += $(subst $(space),,protoc-macro:python, \
 		$(TARGET_OUT_STAGING)/$(airsdk-hello.pb-python-dir), \
 		$(LOCAL_PATH)/$(__f), \
-		$(LOCAL_PATH)/$(airsdk-hello.pb-src-dir))) \
+		$(LOCAL_PATH)/$(airsdk-hello.airsdk-pb-root))) \
 )
 
 include $(BUILD_CUSTOM)
@@ -81,7 +83,7 @@ LOCAL_LIBRARIES := \
 	protobuf-python
 
 # Hello guidance protobuf library (Python)
-hello_guidance_proto_path := $(airsdk-hello.pb-src-dir)/$(airsdk-hello.tree)/guidance
+hello_guidance_proto_path := $(airsdk-hello.guidance-pb-root)/$(airsdk-hello.tree)/guidance
 hello_guidance_proto_files := \
 	$(call all-files-under,$(hello_guidance_proto_path),.proto)
 
@@ -89,7 +91,7 @@ $(foreach __f,$(hello_guidance_proto_files), \
 	$(eval LOCAL_CUSTOM_MACROS += $(subst $(space),,protoc-macro:python, \
 		$(TARGET_OUT_STAGING)/$(airsdk-hello.pb-python-dir), \
 		$(LOCAL_PATH)/$(__f), \
-		$(LOCAL_PATH)/$(airsdk-hello.pb-src-dir))) \
+		$(LOCAL_PATH)/$(airsdk-hello.guidance-pb-root))) \
 )
 
 include $(BUILD_CUSTOM)
