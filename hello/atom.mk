@@ -34,7 +34,7 @@ $(call copy-all-under,autopilot-plugins/guidance/python,.py,$(airsdk-hello.guida
 
 LOCAL_LIBRARIES := \
 	airsdk-hello-cv-service \
-	libguidance-airsdk-hello-pbpy \
+	libairsdk-hello-guidance-pbpy \
 	libmission-airsdk-hello-pbpy
 
 include $(BUILD_CUSTOM)
@@ -71,7 +71,7 @@ include $(BUILD_CUSTOM)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := libairsdk-vehicle-guidance-pbpy
+LOCAL_MODULE := libairsdk-hello-guidance-pbpy
 LOCAL_DESCRIPTION := Protobuf python code for hello guidance
 LOCAL_CATEGORY_PATH := airsdk/missions/samples/hello
 LOCAL_LIBRARIES := \
