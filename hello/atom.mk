@@ -71,7 +71,7 @@ include $(BUILD_CUSTOM)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := libguidance-airsdk-hello-pbpy
+LOCAL_MODULE := libairsdk-vehicle-guidance-pbpy
 LOCAL_DESCRIPTION := Protobuf python code for hello guidance
 LOCAL_CATEGORY_PATH := airsdk/missions/samples/hello
 LOCAL_LIBRARIES := \
