@@ -40,7 +40,6 @@ class Say(State):
     # state machine will call the step method with that kind of
     # message.
     def step(self, msg):
-        self.log.warning("step: %s", msg)
         # It is a good practice to check the kind of message received
         # in case there are multiple events that can trigger the step.
         msgname = msg.WhichOneof('id')
