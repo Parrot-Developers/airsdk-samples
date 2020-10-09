@@ -1,5 +1,5 @@
 
-# Sample of mission service
+# Sample of native service
 
 ## Introduction
 
