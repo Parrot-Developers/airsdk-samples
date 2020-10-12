@@ -57,7 +57,7 @@ class HelloGroundMode(gdnc_core.Mode):
     def get_triggers(self):
         return (gdnc_core.Trigger.TIMER, 30, 30)
 
-    def configure(self, msg, disable_oa):
+    def configure(self, msg, disable_oa, override_fcam, override_stereo):
         if not msg.type_url.endswith(CONFIG_SUFFIX):
             raise ValueError("Ground: unexpected config: %s" % msg.type_url)
 
