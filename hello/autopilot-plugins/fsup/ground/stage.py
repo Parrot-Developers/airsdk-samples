@@ -36,12 +36,12 @@ class Say(State):
         m.set_mode.config.Pack(HelloGroundMode.Config(say=True))
         self.mc.send(m)
 
-    # Since we defined a self-transition on the "count" message, the
-    # state machine will call the step method with that kind of
-    # message.
+    # State machine will call the state step method with the
+    # guidance "count" event.
     def step(self, msg):
-        # It is a good practice to check the kind of message received
-        # in case there are multiple events that can trigger the step.
+        # It is required to check the kind of message received as multiple
+        # messages can trigger the step method. Instance can be checked too
+        # if messages can have the same name.
         msgname = msg.WhichOneof('id')
         if msgname == "count":
             svc = self.mission.hello_svc.evt
