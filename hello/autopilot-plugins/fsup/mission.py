@@ -113,14 +113,6 @@ class Mission(object):
             # "idle" states in the ground stage.
             [self.hello_svc.cmd.idx.say, 'ground.idle', 'ground.say'],
             [self.hello_svc.cmd.idx.say, 'ground.say',  'ground.idle'],
-
-            # Add this transition so that "count" events trigger the
-            # step method in the state. "None" target state means
-            # "stay in same state" (this has not much impact here,
-            # this is more useful when the source state is a list of
-            # states).
-            [self.gdnc_grd_svc.idx.count, 'ground.say',  None],
-
         ]
 
         return TRANSITIONS + DEF_TRANSITIONS
