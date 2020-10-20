@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package parrot.missions.samples.hello.airsdk;
+package parrot.missions.samples.hello.airsdk.messages;
 
 // for the application-side of the mission
 // (ie. "com" prefix + "drone" intermediate package)
