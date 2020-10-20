@@ -47,14 +47,6 @@ class Mission(object):
         self.gdnc_grd_svc = self.mc.make_service(HelloGroundMode.Event)
 
     def on_activate(self):
-        # It is recommanded that log functions are only called with a
-        # format string and additional arguments, instead of a string
-        # that is already interpolated (e.g. with % or .format()),
-        # especially in a context where logs happen frequently. This
-        # is due to the fact that string interpolation need only be
-        # done when the record is actually logged (for example, by
-        # default log.debug(...) is not logged).
-        self.log.info("%s: activated", UID)
         # All messages are forwarded to the supervisor's message
         # center, which feeds the state machine and makes transitions
         # based on those messages possible
@@ -75,7 +67,14 @@ class Mission(object):
         })
 
     def _on_msg_evt(self, event, service, message):
-        self.log.info("%s: message %s", UID, message)
+        # It is recommended that log functions are only called with a
+        # format string and additional arguments, instead of a string
+        # that is already interpolated (e.g. with % or .format()),
+        # especially in a context where logs happen frequently. This
+        # is due to the fact that string interpolation need only be
+        # done when the record is actually logged (for example, by
+        # default log.debug(...) is not logged).
+        self.log.debug("%s: message %s", UID, message)
 
     def on_deactivate(self):
         self.hello_svc.detach()
