@@ -22,7 +22,7 @@ ULOG_DECLARE_TAG(ULOG_TAG);
 #include <video-ipc/vipc_client_cfg.h>
 #include <opencv2/opencv.hpp>
 
-#define VIPC_DISP_MAP_STREAM	"fstcam_stereo_depth_filtered"
+#define VIPC_DEPTH_MAP_STREAM	"fstcam_stereo_depth_filtered"
 #define TLM_SECTION_USER	"drone_controller"
 #define TLM_SECTION_OUT		"ms_sample"
 #define TLM_SECTION_OUT_RATE	1000
@@ -349,10 +349,10 @@ static int context_init(struct context *ctx)
 	}
 
 	/* Get vipc cfg info */
-	res = vipcc_cfg_get_info(VIPC_DISP_MAP_STREAM, &vipc_info);
+	res = vipcc_cfg_get_info(VIPC_DEPTH_MAP_STREAM, &vipc_info);
 	if (res < 0) {
 		ULOG_ERRNO("vipcc_cfg_get_info('%s')", -res,
-			VIPC_DISP_MAP_STREAM);
+			VIPC_DEPTH_MAP_STREAM);
 		goto error;
 	} else {
 		/* Create vipc client */
