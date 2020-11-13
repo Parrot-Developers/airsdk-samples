@@ -9,7 +9,7 @@
     <project name="dragon_build" path="build/dragon_build">
         <linkfile src="root-build.sh" dest="build.sh"/>
     </project>
-    <project name="dragon_buildext_mission" path="build/dragon_buildext_mission">
+    <project name="dragon_buildext_mission" path="build/dragon_buildext_mission"/>
 
     <!-- Air SDK Doc -->
     <project name="airsdk-doc" path="packages/airsdk-doc">
