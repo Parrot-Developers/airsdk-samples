@@ -27,6 +27,7 @@ class Mission(object):
         self.mc = self.env.mc
         self.log = logging.getLogger()
 
+    def on_load(self):
         # Create a ServicePair instance from the Python module that is
         # generated from the source protobuf file. The module is
         # expected to define two classes, Command and Event. The
@@ -45,6 +46,10 @@ class Mission(object):
         # ServicePair because HelloGroundMode only defines an Event
         # class (there is no Command message).
         self.gdnc_grd_svc = self.mc.make_service(HelloGroundMode.Event)
+
+    def on_unload(self):
+        self.gdnc_grd_svc = None
+        self.hello_svc = None
 
     def on_activate(self):
         # All messages are forwarded to the supervisor's message
