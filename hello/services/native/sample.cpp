@@ -24,7 +24,7 @@ ULOG_DECLARE_TAG(ULOG_TAG);
 
 #define VIPC_DEPTH_MAP_STREAM	"fstcam_stereo_depth_filtered"
 #define TLM_SECTION_USER	"drone_controller"
-#define TLM_SECTION_OUT		"ms_sample"
+#define TLM_SECTION_OUT		"cv@hello"
 #define TLM_SECTION_OUT_RATE	1000
 #define TLM_SECTION_OUT_COUNT	10
 
