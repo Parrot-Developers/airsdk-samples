@@ -31,6 +31,9 @@ class Mission(object):
         self.log = logging.getLogger()
 
     def on_load(self):
+        ##################################
+        # Messages / communication setup #
+        ##################################
         # Create a ServicePair instance from the Python module that is
         # generated from the source protobuf file. The module is
         # expected to define two classes, Command and Event. The
@@ -55,11 +58,17 @@ class Mission(object):
             self.mc.start_client_channel('unix:/tmp/hello-cv-service')
 
     def on_unload(self):
+        ##################################
+        # Messages / communication setup #
+        ##################################
         self.cv_channel = None
         self.gdnc_grd_svc = None
         self.hello_svc = None
 
     def on_activate(self):
+        ##################################
+        # Messages / communication setup #
+        ##################################
         # All messages are forwarded to the supervisor's message
         # center, which feeds the state machine and makes transitions
         # based on those messages possible
@@ -84,6 +93,12 @@ class Mission(object):
             events.Service.MESSAGE: self._on_msg_evt
         })
 
+        ############
+        # Commands #
+        ############
+        # Start Computer Vision service processing
+        self.cv_svc.cmd.sender.set_process(True)
+
     def _on_msg_evt(self, event, service, message):
         # It is recommended that log functions are only called with a
         # format string and additional arguments, instead of a string
@@ -95,6 +110,15 @@ class Mission(object):
         self.log.debug("%s: message %s", UID, message)
 
     def on_deactivate(self):
+        ############
+        # Commands #
+        ############
+        # Stop Computer Vision service processing
+        self.cv_svc.cmd.sender.set_process(False)
+
+        ##################################
+        # Messages / communication setup #
+        ##################################
         self.mc.detach_client_service_pair(self.cv_svc)
         self.cv_svc = None
 
