@@ -22,7 +22,7 @@ ULOG_DECLARE_TAG(ULOG_TAG);
 #include <video-ipc/vipc_client_cfg.h>
 #include <opencv2/opencv.hpp>
 
-#include <hello/cv-service/messages.msghub.h>
+#include <samples/hello/cv-service/messages.msghub.h>
 
 #define VIPC_DEPTH_MAP_STREAM	"fstcam_stereo_depth_filtered"
 #define TLM_SECTION_USER	"drone_controller"
