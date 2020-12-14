@@ -22,11 +22,14 @@ ULOG_DECLARE_TAG(ULOG_TAG);
 #include <video-ipc/vipc_client_cfg.h>
 #include <opencv2/opencv.hpp>
 
+#include <hello/cv-service/messages.msghub.h>
+
 #define VIPC_DEPTH_MAP_STREAM	"fstcam_stereo_depth_filtered"
 #define TLM_SECTION_USER	"drone_controller"
 #define TLM_SECTION_OUT		"cv@hello"
 #define TLM_SECTION_OUT_RATE	1000
 #define TLM_SECTION_OUT_COUNT	10
+#define MSGHUB_ADDR		"unix:/tmp/hello-cv-service"
 
 struct tlm_data_in {
 	struct timespec timestamp;
@@ -58,10 +61,27 @@ struct tlm_data_out {
 	} algo;
 };
 
+class HelloServiceCommandHandler
+	: public ::samples::hello::cv_service::messages::msghub::CommandHandler {
+public:
+	inline HelloServiceCommandHandler() : mProcess(false) {}
+
+	void setProcess(bool msg) override
+	{
+		mProcess = msg;
+	}
+
+	bool getProcess()
+	{
+		return mProcess;
+	}
+private:
+	bool mProcess;
+};
+
 struct context {
-	/* Stopped flag, set to 1 by signal handler to exit cleanly */
 	/* Main loop of the program */
-	struct pomp_loop *loop;
+	pomp::Loop loop;
 
 	/* Consumer to get drone telemetry */
 	struct tlm_consumer *consumer;
@@ -86,6 +106,16 @@ struct context {
 
 	/* Mask frame */
 	cv::Mat mask_frame;
+
+	/* Message hub */
+	msghub::MessageHub *msg;
+
+	/* Message hub channel */
+	msghub::Channel *msg_channel;
+
+	/* Message hub command handler */
+	HelloServiceCommandHandler msg_handler;
+
 };
 
 static const struct tlm_reg_field s_tlm_data_in_fields[] = {
@@ -129,12 +159,15 @@ static const struct tlm_reg_struct s_tlm_data_out_struct =
 
 /* Global context (so the signal handler can access it */
 static struct context s_ctx;
+/* Stop flag, set to 1 by signal handler to exit cleanly */
 static volatile int stop;
 
 
 static void context_clean(struct context *ctx)
 {
 	int res = 0;
+
+	delete ctx->msg;
 
 	if (ctx->vipcc != NULL) {
 		res = vipcc_destroy(ctx->vipcc);
@@ -153,21 +186,24 @@ static void context_clean(struct context *ctx)
 		if (res < 0)
 			ULOG_ERRNO("tlm_consumer_destroy", -res);
 	}
-
-	if (ctx->loop != NULL) {
-		res = pomp_loop_destroy(ctx->loop);
-		if (res < 0)
-			ULOG_ERRNO("pomp_loop_destroy", -res);
-	}
 }
 
 static int context_start(struct context *ctx)
 {
 	int res = 0;
 
+	/* vipc */
 	res = vipcc_start(ctx->vipcc);
 	if (res < 0)
 		ULOG_ERRNO("vipc_start", -res);
+
+	/* msg */
+	ctx->msg_channel = ctx->msg->startServerChannel(
+		pomp::Address(MSGHUB_ADDR), 0666);
+	if (ctx->msg_channel == nullptr)
+		ULOGE("Failed to start server channel on '%s'", MSGHUB_ADDR);
+
+	ctx->msg->attachMessageHandler(&ctx->msg_handler);
 
 	return res;
 }
@@ -176,6 +212,12 @@ static int context_stop(struct context *ctx)
 {
 	int res = 0;
 
+	/* msg */
+	ctx->msg->detachMessageHandler(&ctx->msg_handler);
+	ctx->msg->stop();
+	ctx->msg_channel = nullptr;
+
+	/* vipc */
 	res = vipcc_stop(ctx->vipcc);
 	if (res < 0)
 		ULOG_ERRNO("vipcc_stop", -res);
@@ -220,6 +262,11 @@ static void frame_cb(struct vipcc_ctx *ctx,
 	int res = 0;
 
 	ULOGD("received frame %08x", frame->index);
+
+	if (!ud->msg_handler.getProcess()) {
+		vipcc_release(ctx, frame);
+		return;
+	}
 
 	ud->tlm_data_out.algo.confidence = 0.f;
 
@@ -305,14 +352,6 @@ static int context_init(struct context *ctx)
 	int res = 0;
 	struct vipcc_cfg_info vipc_info;
 
-	/* Create pomp loop */
-	ctx->loop = pomp_loop_new();
-	if (ctx->loop == NULL) {
-		res = -ENOMEM;
-		ULOG_ERRNO("pomp_loop_new", -res);
-		goto error;
-	}
-
 	/* Create telemetry consumer */
 	ctx->consumer = tlm_consumer_new();
 	if (ctx->consumer == NULL) {
@@ -360,7 +399,7 @@ static int context_init(struct context *ctx)
 		goto error;
 	} else {
 		/* Create vipc client */
-		ctx->vipcc = vipcc_new(s_ctx.loop,
+		ctx->vipcc = vipcc_new((struct pomp_loop *)s_ctx.loop,
 				&client_cbs,
 				vipc_info.be_cbs,
 				vipc_info.address,
@@ -373,6 +412,13 @@ static int context_init(struct context *ctx)
 		}
 	}
 	vipcc_cfg_release_info(&vipc_info);
+
+	ctx->msg = new msghub::MessageHub(&s_ctx.loop, nullptr);
+	if (ctx->msg == nullptr) {
+		res = -ENOMEM;
+		ULOG_ERRNO("msg_new", -res);
+		goto error;
+	}
 
 	return 0;
 
@@ -387,7 +433,7 @@ static void sighandler(int signum)
 	/* Set stopped flag and wakeup loop */
 	ULOGI("signal %d (%s) received", signum, strsignal(signum));
 	stop = 1;
-	pomp_loop_wakeup(s_ctx.loop);
+	pomp_loop_wakeup((struct pomp_loop *)s_ctx.loop);
 }
 
 int main(int argc, char *argv[])
@@ -406,7 +452,7 @@ int main(int argc, char *argv[])
 
 	/* Run loop until stop is requested */
 	while (!stop)
-		pomp_loop_wait_and_process(s_ctx.loop, -1);
+		pomp_loop_wait_and_process((struct pomp_loop *)s_ctx.loop, -1);
 
 	/* Stop and cleanup */
 	context_stop(&s_ctx);

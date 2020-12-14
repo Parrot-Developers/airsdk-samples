@@ -113,6 +113,8 @@ LOCAL_DESTDIR := $(airsdk-hello.payload-dir)/services
 LOCAL_SRC_FILES := services/native/sample.cpp
 
 LOCAL_LIBRARIES := \
+	libairsdk-hello-cv-service-msghub \
+	libmsghub \
 	libpomp \
 	libtelemetry \
 	libulog \
@@ -121,3 +123,57 @@ LOCAL_LIBRARIES := \
 	opencv4
 
 include $(BUILD_EXECUTABLE)
+
+#############################################################
+# Messages exchanged between mission and native cv service
+
+cv_service_proto_path := services/native/protobuf
+cv_service_proto_files := $(call all-files-under,$(cv_service_proto_path),.proto)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := libairsdk-hello-cv-service-pbpy
+LOCAL_CATEGORY_PATH := airsdk/missions/samples/hello
+LOCAL_LIBRARIES := \
+	protobuf-python
+
+$(foreach __f,$(cv_service_proto_files), \
+	$(eval LOCAL_CUSTOM_MACROS += $(subst $(space),,protoc-macro:python, \
+		$(TARGET_OUT_STAGING)/usr/lib/python/site-packages, \
+		$(LOCAL_PATH)/$(__f), \
+		$(LOCAL_PATH)/$(cv_service_proto_path))) \
+)
+
+include $(BUILD_CUSTOM)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := libairsdk-hello-cv-service-pb
+LOCAL_CATEGORY_PATH := airsdk/missions/samples/hello
+LOCAL_CXXFLAGS := -std=c++11
+LOCAL_LIBRARIES := protobuf
+LOCAL_EXPORT_C_INCLUDES := $(call local-get-build-dir)/gen
+
+$(foreach __f,$(cv_service_proto_files), \
+	$(eval LOCAL_CUSTOM_MACROS += $(subst $(space),,protoc-macro:cpp,gen, \
+		$(LOCAL_PATH)/$(__f), \
+		$(LOCAL_PATH)/$(cv_service_proto_path))) \
+)
+
+include $(BUILD_LIBRARY)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := libairsdk-hello-cv-service-msghub
+LOCAL_CATEGORY_PATH := airsdk/missions/samples/hello
+LOCAL_CXXFLAGS := -std=c++11
+LOCAL_LIBRARIES := protobuf libairsdk-hello-cv-service-pb libmsghub
+LOCAL_EXPORT_C_INCLUDES := $(call local-get-build-dir)/gen
+
+$(foreach __f,$(cv_service_proto_files), \
+	$(eval LOCAL_CUSTOM_MACROS += $(subst $(space),,msghub-macro:cpp,gen, \
+		$(LOCAL_PATH)/$(__f), \
+		$(LOCAL_PATH)/$(cv_service_proto_path))) \
+)
+
+include $(BUILD_LIBRARY)
