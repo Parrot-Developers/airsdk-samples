@@ -9,8 +9,8 @@ from fsup.missions.default.mission import TRANSITIONS as DEF_TRANSITIONS
 # messages exchanged with mission UI code
 import parrot.missions.samples.hello.airsdk.messages_pb2 as HelloMessages
 
-# messages exchanged with the guidance mode
-import parrot.missions.samples.hello.guidance.messages_pb2 as HelloGroundMode
+# messages exchanged with the guidance ground mode
+import samples.hello.guidance.messages_pb2 as HelloGdncGroundModeMessages
 
 # messages exchanged with the cv service
 import samples.hello.cv_service.messages_pb2 as HelloCvServiceMessages
@@ -19,7 +19,6 @@ import samples.hello.cv_service.messages_pb2 as HelloCvServiceMessages
 import fsup.services.events as events
 
 UID = "com.parrot.missions.samples.hello"
-GUIDANCE_MODE = UID + '.ground'
 
 from .ground.stage import GROUND_STAGE
 from .flying.stage import FLYING_STAGE
@@ -44,14 +43,14 @@ class Mission(object):
         # commands. That's why the attach() and detach() methods of
         # the ServicePair object are setup to automatically attach a
         # message handler for the cmd Service, and a message sender
-        # for the evt Service (see example of client code in
-        # flight_supervisor/tools/)
+        # for the evt Service.
         self.hello_svc = self.env.make_airsdk_service_pair(HelloMessages)
 
         # Directly create an instance of Service instead of a
-        # ServicePair because HelloGroundMode only defines an Event
+        # ServicePair because HelloGdncGroundModeMessages only defines an Event
         # class (there is no Command message).
-        self.gdnc_grd_svc = self.mc.make_service(HelloGroundMode.Event)
+        self.gdnc_grd_svc = \
+            self.mc.make_service(HelloGdncGroundModeMessages.Event)
 
         # Create Computer Vision service messages channel
         self.cv_channel = \

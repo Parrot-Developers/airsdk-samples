@@ -9,7 +9,7 @@ import cam_controller.control_mode_pb2 as cam_cm_pb2
 import guidance.core as gdnc_core
 import guidance.guidance_pb2 as guidance_pb
 
-import parrot.missions.samples.hello.guidance.messages_pb2 as HelloGroundModeMessages
+import samples.hello.guidance.messages_pb2 as HelloGroundModeMessages
 CONFIG_SUFFIX = '/' + HelloGroundModeMessages.Config.DESCRIPTOR.full_name
 
 class HelloGroundMode(gdnc_core.Mode):
