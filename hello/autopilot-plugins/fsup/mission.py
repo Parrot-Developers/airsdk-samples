@@ -12,6 +12,9 @@ import parrot.missions.samples.hello.airsdk.messages_pb2 as HelloMessages
 # messages exchanged with the guidance mode
 import parrot.missions.samples.hello.guidance.messages_pb2 as HelloGroundMode
 
+# messages exchanged with the cv service
+import samples.hello.cv_service.messages_pb2 as HelloCvServiceMessages
+
 # events that are not expressed as protobuf messages
 import fsup.services.events as events
 
@@ -47,7 +50,12 @@ class Mission(object):
         # class (there is no Command message).
         self.gdnc_grd_svc = self.mc.make_service(HelloGroundMode.Event)
 
+        # Create Computer Vision service messages channel
+        self.cv_channel = \
+            self.mc.start_client_channel('unix:/tmp/hello-cv-service')
+
     def on_unload(self):
+        self.cv_channel = None
         self.gdnc_grd_svc = None
         self.hello_svc = None
 
@@ -66,6 +74,11 @@ class Mission(object):
         # message center and used as transition events in the
         # supervisor's state-machine.
         self.gdnc_grd_svc.start_forwarding(self.mc.notify)
+
+        # Attach Computer Vision service messages
+        self.cv_svc = self.mc.attach_client_service_pair( \
+            self.cv_channel, HelloCvServiceMessages, True)
+
         # For debugging, also observe messages manually.
         self._dbg_observer = self.hello_svc.observe({
             events.Service.MESSAGE: self._on_msg_evt
@@ -82,6 +95,9 @@ class Mission(object):
         self.log.debug("%s: message %s", UID, message)
 
     def on_deactivate(self):
+        self.mc.detach_client_service_pair(self.cv_svc)
+        self.cv_svc = None
+
         self.hello_svc.detach()
         self._dbg_observer.unobserve()
         delattr(self, '_dbg_observer')

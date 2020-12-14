@@ -44,6 +44,7 @@ $(call copy-all-under,autopilot-plugins/guidance/python,.py,$(airsdk-hello.guida
 
 LOCAL_LIBRARIES := \
 	airsdk-hello-cv-service \
+	libairsdk-hello-cv-service-pbpy \
 	libairsdk-hello-guidance-pbpy \
 	libmission-airsdk-hello-pbpy
 
