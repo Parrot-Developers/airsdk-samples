@@ -231,15 +231,18 @@ static void frame_cb(struct vipcc_ctx *ctx,
 	if (frame->height != ud->frame_dim.height) {
 		ULOGE("frame height (%d) different than status height (%d)",
 			frame->height, ud->frame_dim.height);
-		goto out;
+		vipcc_release(ctx, frame);
+		return;
 	}
 	if (frame->num_planes != 1) {
 		ULOGE("wrong number of planes (%d)", frame->num_planes);
-		goto out;
+		vipcc_release(ctx, frame);
+		return;
 	}
 	if (frame->format != VACQ_PIX_FORMAT_RAW32) {
 		ULOGE("wrong format");
-		goto out;
+		vipcc_release(ctx, frame);
+		return;
 	}
 
 	ud->depth_frame = cv::Mat(ud->frame_dim.width, ud->frame_dim.height,
