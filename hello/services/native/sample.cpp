@@ -136,6 +136,12 @@ static void context_clean(struct context *ctx)
 {
 	int res = 0;
 
+	if (ctx->vipcc != NULL) {
+		res = vipcc_destroy(ctx->vipcc);
+		if (res < 0)
+			ULOG_ERRNO("vipcc_destroy", -res);
+	}
+
 	if (ctx->producer != NULL) {
 		res = tlm_producer_destroy(ctx->producer);
 		if (res < 0)
@@ -146,12 +152,6 @@ static void context_clean(struct context *ctx)
 		res = tlm_consumer_destroy(ctx->consumer);
 		if (res < 0)
 			ULOG_ERRNO("tlm_consumer_destroy", -res);
-	}
-
-	if (ctx->vipcc != NULL) {
-		res = vipcc_destroy(ctx->vipcc);
-		if (res < 0)
-			ULOG_ERRNO("vipcc_destroy", -res);
 	}
 
 	if (ctx->loop != NULL) {
