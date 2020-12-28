@@ -7,6 +7,6 @@
 	"target_min_version": "0.0.0",
 	"target_max_version": "99.99.99",
 	"services" : [
-		["hello-cv-service", "airsdk-hello-cv-service", "arg1", "arg2"]
+		["hello-cv", "airsdk-hello-cv-service", "arg1", "arg2"]
 	]
 }
