@@ -153,10 +153,10 @@ class Mission(object):
         # state.
 
         TRANSITIONS = [
-            # "say" messages from the user alternate between "say" and
+            # "say/hold" messages from the mission UI alternate between "say" and
             # "idle" states in the ground stage.
             [self.hello_svc.cmd.idx.say, 'ground.idle', 'ground.say'],
-            [self.hello_svc.cmd.idx.say, 'ground.say',  'ground.idle'],
+            [self.hello_svc.cmd.idx.hold, 'ground.say', 'ground.idle'],
         ]
 
         return TRANSITIONS + DEF_TRANSITIONS

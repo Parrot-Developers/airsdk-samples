@@ -12,8 +12,10 @@ import 'google/protobuf/empty.proto';
 // Union of all possible commands of this package.
 message Command {
     oneof id {
-        /* Ask to start/stop say hello (ground) */
+        /* Ask to start say hello (ground) */
         google.protobuf.Empty say = 1;
+        /* Ask to stop say hello (ground) */
+        google.protobuf.Empty hold = 2;
     }
 }
 
