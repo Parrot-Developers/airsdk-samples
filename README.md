@@ -21,25 +21,36 @@
 
 ## Build
 
-Before building, Parrot AirSDK must be added to your work repository. It
-contains all necessary headers as well as prebuilt libraries. It also contains
-generated files used by our build system (`alchemy`) to specify include
-directories required for each library.
+Before building, you need to get AirSDK in your work repository with the
+following command (Ubuntu 18.04 LTS):
 
-The images should be extracted in the following directories:
-- ./sdk/pc/ for the simulator image
-- ./sdk/classic/ for the drone image
+```bash
+# Drone build
+./build.sh -p classic -t download-base-sdk
 
-Then:
+# Simulator build
+./build.sh -p pc -t download-base-sdk
+```
+
+Then, you can build with the following command:
 ```bash
 # Simulator build
-./build.sh -p pc -t build -j
+./build.sh -p hello-pc -t all -j
 
 # Drone build
-./build.sh -p classic -t build -j
+./build.sh -p hello-classic -t all -j
 ```
-**TODO: Image generation once implemented**
 
 To add new dependencies or source files refer to the `atom.mk` and the alchemy
 documentation.
+
+## Mission usage
+
+```bash
+# Simulator upload
+curl -X PUT "http://anafi2.local/api/v1/mission/missions/?allow_overwrite=yes" --data-binary @"out/hello-pc/images/com.parrot.missions.samples.hello.tar.gz"
+
+# Drone upload (and set mission to default)
+curl -X PUT "http://anafi2.local/api/v1/mission/missions/?allow_overwrite=yes&is_default=yes" --data-binary @"out/hello-classic/images/com.parrot.missions.samples.hello.tar.gz"
+```
 
