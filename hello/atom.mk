@@ -2,8 +2,7 @@ LOCAL_PATH := $(call my-dir)
 
 airsdk-hello.name        := hello
 airsdk-hello.uid         := com.parrot.missions.samples.$(airsdk-hello.name)
-airsdk-hello.mission-dir := missions/$(airsdk-hello.uid)
-airsdk-hello.payload-dir := $(airsdk-hello.mission-dir)/payload
+airsdk-hello.payload-dir := missions/$(airsdk-hello.uid)/payload
 
 airsdk-hello.fsup-dir        := $(airsdk-hello.payload-dir)/fsup
 airsdk-hello.guidance-dir    := $(airsdk-hello.payload-dir)/guidance
@@ -14,22 +13,6 @@ airsdk-hello.guidance-dir    := $(airsdk-hello.payload-dir)/guidance
 copy-all-under = $(foreach __f,\
 	$(call all-files-under,$1,$2),\
 	$(eval LOCAL_COPY_FILES += $(__f):$(patsubst $1/%,$3/%,$(__f))))
-
-#############################################################
-# Copy mission files - Required for integrated build
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := airsdk-hello-files
-LOCAL_DESCRIPTION := AirSdk integrated hello mission files
-LOCAL_CATEGORY_PATH := airsdk/missions/samples/hello
-
-LOCAL_COPY_FILES += \
-	product/common/skel/$(airsdk-hello.mission-dir)/mission.json:$(airsdk-hello.mission-dir)/
-
-LOCAL_LIBRARIES := \
-	airsdk-hello-autopilot-plugins
-
-include $(BUILD_CUSTOM)
 
 #############################################################
 # Copy autopilot mission files (fsup/guidance python)
