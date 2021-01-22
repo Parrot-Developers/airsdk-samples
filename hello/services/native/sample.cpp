@@ -298,10 +298,13 @@ static void frame_cb(struct vipcc_ctx *ctx,
 			frame->planes[0].stride);
 
 	ud->mask_frame.setTo(1);
-	for (i = 0; i < ud->depth_frame.rows; ++i)
-		for (j = 0; j < ud->depth_frame.cols; ++j)
-			if (ud->depth_frame.at<float>(i, j) == -1.f)
+	for (i = 0; i < ud->depth_frame.rows; ++i) {
+		for (j = 0; j < ud->depth_frame.cols; ++j) {
+			if (ud->depth_frame.at<float>(i, j) < 0.f ||
+				ud->depth_frame.at<float>(i, j) == INFINITY)
 				ud->mask_frame.at<uint8_t>(i, j) = 0;
+		}
+	}
 
 	depth_mean = (float)cv::mean(ud->depth_frame, ud->mask_frame).val[0];
 
