@@ -243,7 +243,7 @@ static void status_cb(struct vipcc_ctx *ctx,
 	ud->frame_dim.width = st->width;
 	ud->frame_dim.height = st->height;
 	ud->mask_frame =
-		cv::Mat(ud->frame_dim.width, ud->frame_dim.height, CV_8UC1);
+		cv::Mat(ud->frame_dim.height, ud->frame_dim.width, CV_8UC1);
 
 	/* Start running */
 	context_start(ud);
@@ -293,7 +293,7 @@ static void frame_cb(struct vipcc_ctx *ctx,
 		return;
 	}
 
-	ud->depth_frame = cv::Mat(ud->frame_dim.width, ud->frame_dim.height,
+	ud->depth_frame = cv::Mat(ud->frame_dim.height, ud->frame_dim.width,
 			CV_32F, (void *)frame->planes[0].virt_addr,
 			frame->planes[0].stride);
 
