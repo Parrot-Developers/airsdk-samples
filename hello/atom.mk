@@ -104,7 +104,8 @@ LOCAL_LIBRARIES := \
 	libulog \
 	libvideo-ipc \
 	libvideo-ipc-client-config \
-	opencv4
+	opencv4 \
+	protobuf
 
 include $(BUILD_EXECUTABLE)
 

@@ -14,6 +14,7 @@ message Command {
 // Union of all possible events of this package.
 message Event {
     oneof id {
-        google.protobuf.Empty empty = 1;
+        google.protobuf.Empty close = 1;
+        google.protobuf.Empty far = 2;
     }
 }

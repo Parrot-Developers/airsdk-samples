@@ -22,6 +22,7 @@ ULOG_DECLARE_TAG(ULOG_TAG);
 #include <video-ipc/vipc_client_cfg.h>
 #include <opencv2/opencv.hpp>
 
+#include <google/protobuf/empty.pb.h>
 #include <samples/hello/cv-service/messages.msghub.h>
 
 #define VIPC_DEPTH_MAP_STREAM	"fstcam_stereo_depth_filtered"
@@ -30,6 +31,8 @@ ULOG_DECLARE_TAG(ULOG_TAG);
 #define TLM_SECTION_OUT_RATE	1000
 #define TLM_SECTION_OUT_COUNT	10
 #define MSGHUB_ADDR		"unix:/tmp/hello-cv-service"
+#define CLOSE_DEPTH		0.8f /* [m] */
+#define FAR_DEPTH		1.2f /* [m] */
 
 struct tlm_data_in {
 	struct timespec timestamp;
@@ -81,6 +84,9 @@ private:
 };
 
 struct context {
+	using HelloServiceEventSender =
+		::samples::hello::cv_service::messages::msghub::EventSender;
+
 	/* Main loop of the program */
 	pomp::Loop loop;
 
@@ -117,6 +123,14 @@ struct context {
 	/* Message hub command handler */
 	HelloServiceCommandHandler msg_cmd_handler;
 
+	/* Message hub event sender */
+	HelloServiceEventSender msg_evt_sender;
+
+	/* Previous depth mean value */
+	float previous_depth_mean;
+
+	/* Close state */
+	bool is_close;
 };
 
 static const struct tlm_reg_field s_tlm_data_in_fields[] = {
@@ -209,6 +223,7 @@ static int context_start(struct context *ctx)
 	}
 
 	ctx->msg->attachMessageHandler(&ctx->msg_cmd_handler);
+	ctx->msg->attachMessageSender(&ctx->msg_evt_sender, ctx->msg_channel);
 
 	return 0;
 }
@@ -219,6 +234,7 @@ static int context_stop(struct context *ctx)
 
 	/* msg */
 	ctx->msg->detachMessageSender(&ctx->msg_evt_sender);
+	ctx->msg->detachMessageHandler(&ctx->msg_cmd_handler);
 	ctx->msg->stop();
 	ctx->msg_channel = nullptr;
 
@@ -329,6 +345,21 @@ static void frame_cb(struct vipcc_ctx *ctx,
 	ud->tlm_data_out.algo.z = ud->tlm_data_in.position_absolute.z;
 	ud->tlm_data_out.algo.depth_mean = depth_mean;
 	ud->tlm_data_out.algo.confidence = 1.f;
+
+	/* Send event message if required */
+	if (depth_mean <= CLOSE_DEPTH && ud->previous_depth_mean > CLOSE_DEPTH
+			&& !ud->is_close) {
+		const ::google::protobuf::Empty message;
+		ud->msg_evt_sender.close(message);
+		ud->is_close = true;
+	}
+	if (depth_mean >= FAR_DEPTH && ud->previous_depth_mean < FAR_DEPTH
+			&& ud->is_close) {
+		const ::google::protobuf::Empty message;
+		ud->msg_evt_sender.far(message);
+		ud->is_close = false;
+	}
+	ud->previous_depth_mean = depth_mean;
 
 out:
 	vipcc_release(ctx, frame);
