@@ -194,18 +194,22 @@ static int context_start(struct context *ctx)
 
 	/* vipc */
 	res = vipcc_start(ctx->vipcc);
-	if (res < 0)
+	if (res < 0) {
 		ULOG_ERRNO("vipc_start", -res);
+		return res;
+	}
 
 	/* msg */
 	ctx->msg_channel = ctx->msg->startServerChannel(
 		pomp::Address(MSGHUB_ADDR), 0666);
-	if (ctx->msg_channel == nullptr)
+	if (ctx->msg_channel == nullptr) {
 		ULOGE("Failed to start server channel on '%s'", MSGHUB_ADDR);
+		res = -EPERM;
+	}
 
 	ctx->msg->attachMessageHandler(&ctx->msg_handler);
 
-	return res;
+	return 0;
 }
 
 static int context_stop(struct context *ctx)
