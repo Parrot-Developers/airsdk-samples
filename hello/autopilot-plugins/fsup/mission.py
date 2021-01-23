@@ -87,7 +87,7 @@ class Mission(object):
         self.cv_service_msgs = self.mc.attach_client_service_pair(
             self.cv_service_msgs_channel, HelloCvServiceMessages, True)
 
-        # For debugging, also observe all messages manually using an observer
+        # For debugging, also observe UI messages manually using an observer
         self._dbg_observer = self.ext_ui_msgs.observe({
             events.Service.MESSAGE: self._on_msg_evt
         })
