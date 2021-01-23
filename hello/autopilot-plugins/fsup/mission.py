@@ -1,5 +1,7 @@
 import logging
 
+from fsup.services.message_center import ServicePair
+
 from fsup.missions.default.takeoff.stage import TAKEOFF_STAGE as DEF_TAKEOFF_STAGE
 from fsup.missions.default.hovering.stage import HOVERING_STAGE as DEF_HOVERING_STAGE
 from fsup.missions.default.landing.stage import LANDING_STAGE as DEF_LANDING_STAGE
@@ -46,14 +48,21 @@ class Mission(object):
         # for the evt Service.
         self.ext_ui_msgs = self.env.make_airsdk_service_pair(HelloMessages)
 
-        # Create Computer Vision service messages channel
+        # Create Guidance ground mode messages
+        self.gdnc_grd_mode_msg = ServicePair(self.mc,
+            HelloGdncGroundModeMessages, self.mc.gdnc_channel)
+
+        # Create Computer Vision service messages
         self.cv_service_msgs_channel = \
             self.mc.start_client_channel('unix:/tmp/hello-cv-service')
+        self.cv_service_msgs = ServicePair(self.mc,
+            HelloCvServiceMessages, self.cv_service_msgs_channel)
 
     def on_unload(self):
         ##################################
         # Messages / communication setup #
         ##################################
+        self.cv_service_msgs = None
         self.cv_service_msgs_channel = None
         self.gdnc_grd_mode_msgs = None
         self.ext_ui_msgs = None
@@ -115,11 +124,9 @@ class Mission(object):
 
         # Detach Guidance ground mode messages
         self.mc.detach_client_service_pair(self.cv_service_msgs)
-        self.cv_service_msgs = None
 
         # Detach Computer Vision service messages
         self.mc.detach_client_service_pair(self.gdnc_grd_mode_msgs)
-        self.gdnc_grd_mode_msgs = None
 
         # Detach mission UI messages
         self.ext_ui_msgs.detach()
