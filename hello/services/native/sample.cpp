@@ -62,7 +62,8 @@ struct tlm_data_out {
 };
 
 class HelloServiceCommandHandler
-	: public ::samples::hello::cv_service::messages::msghub::CommandHandler {
+	: public ::samples::hello::cv_service::messages::msghub::
+		  CommandHandler {
 public:
 	inline HelloServiceCommandHandler() : mProcess(false) {}
 
@@ -114,7 +115,7 @@ struct context {
 	msghub::Channel *msg_channel;
 
 	/* Message hub command handler */
-	HelloServiceCommandHandler msg_handler;
+	HelloServiceCommandHandler msg_cmd_handler;
 
 };
 
@@ -207,7 +208,7 @@ static int context_start(struct context *ctx)
 		res = -EPERM;
 	}
 
-	ctx->msg->attachMessageHandler(&ctx->msg_handler);
+	ctx->msg->attachMessageHandler(&ctx->msg_cmd_handler);
 
 	return 0;
 }
@@ -217,7 +218,7 @@ static int context_stop(struct context *ctx)
 	int res = 0;
 
 	/* msg */
-	ctx->msg->detachMessageHandler(&ctx->msg_handler);
+	ctx->msg->detachMessageSender(&ctx->msg_evt_sender);
 	ctx->msg->stop();
 	ctx->msg_channel = nullptr;
 
@@ -267,7 +268,7 @@ static void frame_cb(struct vipcc_ctx *ctx,
 
 	ULOGD("received frame %08x", frame->index);
 
-	if (!ud->msg_handler.getProcess()) {
+	if (!ud->msg_cmd_handler.getProcess()) {
 		vipcc_release(ctx, frame);
 		return;
 	}
@@ -420,6 +421,7 @@ static int context_init(struct context *ctx)
 	}
 	vipcc_cfg_release_info(&vipc_info);
 
+	/* Create message hub */
 	ctx->msg = new msghub::MessageHub(&s_ctx.loop, nullptr);
 	if (ctx->msg == nullptr) {
 		res = -ENOMEM;
