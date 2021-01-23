@@ -1,10 +1,19 @@
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
+
 package samples.hello.guidance.messages;
 
 // Ground mode configuration
 message Config {
     bool say = 1;
+}
+
+// Union of all possible commands of this package.
+message Command {
+    oneof id {
+        google.protobuf.Empty empty = 1;
+    }
 }
 
 // Union of all possible events of this package.

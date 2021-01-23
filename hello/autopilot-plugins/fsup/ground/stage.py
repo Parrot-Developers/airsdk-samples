@@ -12,45 +12,37 @@ _STATES_TO_REMOVE = [
     'idle'
 ]
 
-_GUIDANCE_MODE = UID + ".ground"
+_GROUND_MODE_NAME = UID + ".ground"
 
-@guidance_modes(_GUIDANCE_MODE)
+@guidance_modes(_GROUND_MODE_NAME)
 class Idle(State):
     def enter(self, msg):
-        m = self.mc.dctl.cmd.alloc()
-        m.set_estimation_mode.mode = cbry_est.MOTORS_STOPPED
-        self.mc.send(m)
+        self.mc.dctl.cmd.sender.set_estimation_mode(
+            mode=cbry_est.MOTORS_STOPPED)
 
-        m = self.mc.gdnc.cmd.alloc()
-        m.set_mode.mode = _GUIDANCE_MODE
-        m.set_mode.config.Pack(HelloGdncGroundModeMessages.Config(say=False))
-        self.mc.send(m)
+        self.set_guidance_mode(
+            _GROUND_MODE_NAME,
+            HelloGdncGroundModeMessages.Config(say=False))
 
-@guidance_modes(_GUIDANCE_MODE)
+@guidance_modes(_GROUND_MODE_NAME)
 class Say(State):
     def enter(self, msg):
-        m = self.mc.dctl.cmd.alloc()
-        m.set_estimation_mode.mode = cbry_est.MOTORS_STOPPED
-        self.mc.send(m)
+        self.mc.dctl.cmd.sender.set_estimation_mode(
+            mode=cbry_est.MOTORS_STOPPED)
 
-        m = self.mc.gdnc.cmd.alloc()
-        m.set_mode.mode = _GUIDANCE_MODE
-        m.set_mode.config.Pack(HelloGdncGroundModeMessages.Config(say=True))
-        self.mc.send(m)
+        self.set_guidance_mode(
+            _GROUND_MODE_NAME,
+            HelloGdncGroundModeMessages.Config(say=True))
 
-    # State machine will call the state step method with the
-    # guidance "count" event.
+    # State machine will call the state step method with the guidance ground
+    # mode "count" event.
     def step(self, msg):
         # It is required to check the kind of message received as multiple
-        # messages can trigger the step method. Instance can be checked too
-        # if messages can have the same name.
-        msgname = msg.WhichOneof('id')
-        if msgname == "count":
-            svc = self.mission.hello_svc.evt
-            evt = svc.alloc()
-            evt.count = msg.count
-            self.log.info('count event: msg=%s evt=%s', msg, evt)
-            svc.send(evt)
+        # messages can trigger the step method.
+        if (isinstance(msg, HelloGdncGroundModeMessages.Event)
+                and msg.WhichOneof('id')  == "count"):
+            self.log.info('ground mode count event: msg=%s', msg)
+            self.mission.ext_ui_msgs.evt.sender.count(msg.count)
 
 IDLE_STATE = {
     'name': 'idle',

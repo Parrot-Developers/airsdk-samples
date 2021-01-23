@@ -6,7 +6,7 @@ from fsup.missions.default.landing.stage import LANDING_STAGE as DEF_LANDING_STA
 from fsup.missions.default.critical.stage import CRITICAL_STAGE as DEF_CRITICAL_STAGE
 from fsup.missions.default.mission import TRANSITIONS as DEF_TRANSITIONS
 
-# messages exchanged with mission UI code
+# messages exchanged with mission UI
 import parrot.missions.samples.hello.airsdk.messages_pb2 as HelloMessages
 
 # messages exchanged with the guidance ground mode
@@ -44,51 +44,42 @@ class Mission(object):
         # the ServicePair object are setup to automatically attach a
         # message handler for the cmd Service, and a message sender
         # for the evt Service.
-        self.hello_svc = self.env.make_airsdk_service_pair(HelloMessages)
-
-        # Directly create an instance of Service instead of a
-        # ServicePair because HelloGdncGroundModeMessages only defines an Event
-        # class (there is no Command message).
-        self.gdnc_grd_svc = \
-            self.mc.make_service(HelloGdncGroundModeMessages.Event)
+        self.ext_ui_msgs = self.env.make_airsdk_service_pair(HelloMessages)
 
         # Create Computer Vision service messages channel
-        self.cv_channel = \
+        self.cv_service_msgs_channel = \
             self.mc.start_client_channel('unix:/tmp/hello-cv-service')
 
     def on_unload(self):
         ##################################
         # Messages / communication setup #
         ##################################
-        self.cv_channel = None
-        self.gdnc_grd_svc = None
-        self.hello_svc = None
+        self.cv_service_msgs_channel = None
+        self.gdnc_grd_mode_msgs = None
+        self.ext_ui_msgs = None
 
     def on_activate(self):
         ##################################
         # Messages / communication setup #
         ##################################
+
         # All messages are forwarded to the supervisor's message
         # center, which feeds the state machine and makes transitions
         # based on those messages possible
-        self.hello_svc.attach()
-        # Attach an event handler for service self.gdnc_grd_svc to the
-        # guidance channel.
-        self.mc.attach_handler(self.mc.gdnc_channel,
-                               self.gdnc_grd_svc)
-        # Forward all service events to the notify method of the
-        # supervisor's message center. This is necessary to make sure
-        # messages from the custom guidance mode are seen by the
-        # message center and used as transition events in the
-        # supervisor's state-machine.
-        self.gdnc_grd_svc.start_forwarding(self.mc.notify)
+
+        # Attach mission UI messages
+        self.ext_ui_msgs.attach()
+
+        # Attach Guidance ground mode messages
+        self.gdnc_grd_mode_msg = self.mc.attach_client_service_pair(
+            self.mc.gdnc_channel, HelloGdncGroundModeMessages, True)
 
         # Attach Computer Vision service messages
-        self.cv_svc = self.mc.attach_client_service_pair( \
-            self.cv_channel, HelloCvServiceMessages, True)
+        self.cv_service_msgs = self.mc.attach_client_service_pair(
+            self.cv_service_msgs_channel, HelloCvServiceMessages, True)
 
-        # For debugging, also observe messages manually.
-        self._dbg_observer = self.hello_svc.observe({
+        # For debugging, also observe all messages manually using an observer
+        self._dbg_observer = self.ext_ui_msgs.observe({
             events.Service.MESSAGE: self._on_msg_evt
         })
 
@@ -96,7 +87,7 @@ class Mission(object):
         # Commands #
         ############
         # Start Computer Vision service processing
-        self.cv_svc.cmd.sender.set_process(True)
+        self.cv_service_msgs.cmd.sender.set_process(True)
 
     def _on_msg_evt(self, event, service, message):
         # It is recommended that log functions are only called with a
@@ -113,22 +104,25 @@ class Mission(object):
         # Commands #
         ############
         # Stop Computer Vision service processing
-        self.cv_svc.cmd.sender.set_process(False)
+        self.cv_service_msgs.cmd.sender.set_process(False)
 
         ##################################
         # Messages / communication setup #
         ##################################
-        self.mc.detach_client_service_pair(self.cv_svc)
-        self.cv_svc = None
-
-        self.hello_svc.detach()
+        # For debugging, unobserve
         self._dbg_observer.unobserve()
         delattr(self, '_dbg_observer')
-        self.mc.detach_handler(self.mc.gdnc_channel, self.gdnc_grd_svc)
-        # while it is not strictly necessary here (since no event will
-        # be recevied after detaching from the channel), also stop
-        # forwarding events.
-        self.gdnc_grd_svc.stop_forwarding(self.mc.notify)
+
+        # Detach Guidance ground mode messages
+        self.mc.detach_client_service_pair(self.cv_service_msgs)
+        self.cv_service_msgs = None
+
+        # Detach Computer Vision service messages
+        self.mc.detach_client_service_pair(self.gdnc_grd_mode_msgs)
+        self.gdnc_grd_mode_msgs = None
+
+        # Detach mission UI messages
+        self.ext_ui_msgs.detach()
 
     def states(self):
         return [
@@ -153,10 +147,10 @@ class Mission(object):
         # state.
 
         TRANSITIONS = [
-            # "say/hold" messages from the mission UI alternate between "say" and
-            # "idle" states in the ground stage.
-            [self.hello_svc.cmd.idx.say, 'ground.idle', 'ground.say'],
-            [self.hello_svc.cmd.idx.hold, 'ground.say', 'ground.idle'],
+            # "say/hold" messages from the mission UI alternate between "say"
+            # and "idle" states in the ground stage.
+            [self.ext_ui_msgs.cmd.idx.say, 'ground.idle', 'ground.say'],
+            [self.ext_ui_msgs.cmd.idx.hold, 'ground.say', 'ground.idle'],
         ]
 
         return TRANSITIONS + DEF_TRANSITIONS
