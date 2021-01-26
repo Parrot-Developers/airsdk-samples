@@ -10,6 +10,7 @@
         <linkfile src="root-build.sh" dest="build.sh"/>
     </project>
     <project name="dragon_buildext_mission" path="build/dragon_buildext_mission"/>
+    <project name="dragon_buildext_sign" path="build/dragon_buildext_sign"/>
 
     <!-- Air SDK Doc -->
     <project name="airsdk-doc" path="packages/airsdk-doc">
