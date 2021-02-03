@@ -49,7 +49,7 @@ class Mission(object):
         self.ext_ui_msgs = self.env.make_airsdk_service_pair(HelloMessages)
 
         # Create Guidance ground mode messages
-        self.gdnc_grd_mode_msg = ServicePair(self.mc,
+        self.gdnc_grd_mode_msgs = ServicePair(self.mc,
             HelloGdncGroundModeMessages, self.mc.gdnc_channel)
 
         # Create Computer Vision service messages
@@ -80,7 +80,7 @@ class Mission(object):
         self.ext_ui_msgs.attach()
 
         # Attach Guidance ground mode messages
-        self.gdnc_grd_mode_msg = self.mc.attach_client_service_pair(
+        self.gdnc_grd_mode_msgs = self.mc.attach_client_service_pair(
             self.mc.gdnc_channel, HelloGdncGroundModeMessages, True)
 
         # Attach Computer Vision service messages
