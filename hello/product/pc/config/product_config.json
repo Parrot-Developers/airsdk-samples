@@ -1,0 +1,10 @@
+{
+	"publish": {
+		"firmware": {
+			"flashing": {
+				"image" : "com.parrot.missions.samples.hello.tar.gz",
+				"sdk_ids" : ["091a"]
+			}
+		}
+	}
+}
