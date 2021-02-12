@@ -17,9 +17,7 @@ _GROUND_MODE_NAME = UID + ".ground"
 @guidance_modes(_GROUND_MODE_NAME)
 class Idle(State):
     def enter(self, msg):
-        self.mc.dctl.cmd.sender.set_estimation_mode(
-            mode=cbry_est.MOTORS_STOPPED)
-
+        self.mc.dctl.cmd.sender.set_estimation_mode(cbry_est.MOTORS_STOPPED)
         self.set_guidance_mode(
             _GROUND_MODE_NAME,
             HelloGdncGroundModeMessages.Config(say=False))
@@ -27,9 +25,7 @@ class Idle(State):
 @guidance_modes(_GROUND_MODE_NAME)
 class Say(State):
     def enter(self, msg):
-        self.mc.dctl.cmd.sender.set_estimation_mode(
-            mode=cbry_est.MOTORS_STOPPED)
-
+        self.mc.dctl.cmd.sender.set_estimation_mode(cbry_est.MOTORS_STOPPED)
         self.set_guidance_mode(
             _GROUND_MODE_NAME,
             HelloGdncGroundModeMessages.Config(say=True))
