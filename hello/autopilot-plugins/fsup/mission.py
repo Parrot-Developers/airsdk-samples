@@ -1,7 +1,5 @@
 import logging
 
-from fsup.services.message_center import ServicePair
-
 from fsup.missions.default.takeoff.stage import TAKEOFF_STAGE as DEF_TAKEOFF_STAGE
 from fsup.missions.default.hovering.stage import HOVERING_STAGE as DEF_HOVERING_STAGE
 from fsup.missions.default.landing.stage import LANDING_STAGE as DEF_LANDING_STAGE
@@ -35,36 +33,17 @@ class Mission(object):
         ##################################
         # Messages / communication setup #
         ##################################
-        # Create a ServicePair instance from the Python module that is
-        # generated from the source protobuf file. The module is
-        # expected to define two classes, Command and Event. The
-        # associated Service instances are stored in the respective
-        # fields "cmd" and "evt" of the ServicePair object. The
-        # mission_environment object and its channel assumes that the
-        # mission is a server: as such it sends events and receive
-        # commands. That's why the attach() and detach() methods of
-        # the ServicePair object are setup to automatically attach a
-        # message handler for the cmd Service, and a message sender
-        # for the evt Service.
+        # Create a ServicePair instance without attaching it immediately
+        # usefull to access the 'idx' field in the transition table.
+        # 'attach' is called in 'on_activate' to start routing commands/events
+        # The airsdk service assumes that the mission is a server: as such it
+        # sends events and receive commands.
         self.ext_ui_msgs = self.env.make_airsdk_service_pair(HelloMessages)
-
-        # Create Guidance ground mode messages
-        self.gdnc_grd_mode_msgs = ServicePair(self.mc,
-            HelloGdncGroundModeMessages, self.mc.gdnc_channel)
-
-        # Create Computer Vision service messages
-        self.cv_service_msgs_channel = \
-            self.mc.start_client_channel('unix:/tmp/hello-cv-service')
-        self.cv_service_msgs = ServicePair(self.mc,
-            HelloCvServiceMessages, self.cv_service_msgs_channel)
 
     def on_unload(self):
         ##################################
-        # Messages / communication setup #
+        # Messages / communication cleanup #
         ##################################
-        self.cv_service_msgs = None
-        self.cv_service_msgs_channel = None
-        self.gdnc_grd_mode_msgs = None
         self.ext_ui_msgs = None
 
     def on_activate(self):
@@ -77,18 +56,22 @@ class Mission(object):
         # based on those messages possible
 
         # Attach mission UI messages
-        self.ext_ui_msgs.attach()
+        self.ext_ui_msgs.attach(self.env.airsdk_channel, True)
 
         # Attach Guidance ground mode messages
         self.gdnc_grd_mode_msgs = self.mc.attach_client_service_pair(
             self.mc.gdnc_channel, HelloGdncGroundModeMessages, True)
+
+        # Create Computer Vision service channel
+        self.cv_service_msgs_channel = self.mc.start_client_channel(
+            'unix:/tmp/hello-cv-service')
 
         # Attach Computer Vision service messages
         self.cv_service_msgs = self.mc.attach_client_service_pair(
             self.cv_service_msgs_channel, HelloCvServiceMessages, True)
 
         # For debugging, also observe UI messages manually using an observer
-        self._dbg_observer = self.ext_ui_msgs.observe({
+        self._dbg_observer = self.ext_ui_msgs.cmd.observe({
             events.Service.MESSAGE: self._on_msg_evt
         })
 
@@ -98,7 +81,7 @@ class Mission(object):
         # Start Computer Vision service processing
         self.cv_service_msgs.cmd.sender.set_process(True)
 
-    def _on_msg_evt(self, event, service, message):
+    def _on_msg_evt(self, event, message):
         # It is recommended that log functions are only called with a
         # format string and additional arguments, instead of a string
         # that is already interpolated (e.g. with % or .format()),
@@ -116,17 +99,23 @@ class Mission(object):
         self.cv_service_msgs.cmd.sender.set_process(False)
 
         ##################################
-        # Messages / communication setup #
+        # Messages / communication cleanup #
         ##################################
         # For debugging, unobserve
         self._dbg_observer.unobserve()
-        delattr(self, '_dbg_observer')
+        self._dbg_observer = None
 
         # Detach Guidance ground mode messages
         self.mc.detach_client_service_pair(self.cv_service_msgs)
+        self.cv_service_msgs = None
 
         # Detach Computer Vision service messages
         self.mc.detach_client_service_pair(self.gdnc_grd_mode_msgs)
+        self.gdnc_grd_mode_msgs = None
+
+        # Stop Computer Vision service channel
+        self.mc.stop_channel(self.cv_service_msgs_channel)
+        self.cv_service_msgs_channel = None
 
         # Detach mission UI messages
         self.ext_ui_msgs.detach()
