@@ -53,7 +53,7 @@ SAY_STATE = {
 GROUND_STAGE = {
     'name': 'ground',
     'class': DEF_GROUND_STAGE['class'],
-    'initial': 'idle',
+    'initial': 'say',
     'children': [
         child for child in DEF_GROUND_STAGE['children']
             if not child['name'] in _STATES_TO_REMOVE
