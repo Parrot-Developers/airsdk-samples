@@ -362,6 +362,7 @@ static void frame_cb(struct vipcc_ctx *ctx,
 	ud->previous_depth_mean = depth_mean;
 
 out:
+	ud->depth_frame.release();
 	vipcc_release(ctx, frame);
 	res = tlm_producer_put_sample(ud->producer, &ts);
 	if (res < 0)
