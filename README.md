@@ -3,21 +3,21 @@
 
 ## Files
 
-.
-├── build/                     Alchemy and build tools
-├── out/                       Output build
-│
-├── packages/                  Source files
-│   └── airsdk-doc/            Samples
-│
-├── products/                  Build configuration
-└── sdk/
-    ├── classic/               Parrot AirSDK for drone build
-    │   ├── ...
-    │   └── atom.mk
-    └── pc/                    Parrot AirSDK for simulator build
-        ├── ...
-        └── atom.mk
+    .
+    ├── build/                     Alchemy and build tools
+    ├── out/                       Output build
+    │
+    ├── packages/                  Source files
+    │   └── airsdk-doc/            Samples
+    │
+    ├── products/                  Build configuration
+    └── sdk/
+        ├── classic/               Parrot AirSDK for drone build
+        │   ├── ...
+        │   └── atom.mk
+        └── pc/                    Parrot AirSDK for simulator build
+            ├── ...
+            └── atom.mk
 
 ## Build
 
