@@ -439,7 +439,7 @@ static int context_init(struct context *ctx)
 		goto error;
 	} else {
 		/* Create vipc client */
-		ctx->vipcc = vipcc_new((struct pomp_loop *)s_ctx.loop,
+		ctx->vipcc = vipcc_new((s_ctx.loop.get(),
 				&client_cbs,
 				vipc_info.be_cbs,
 				vipc_info.address,
@@ -474,7 +474,7 @@ static void sighandler(int signum)
 	/* Set stopped flag and wakeup loop */
 	ULOGI("signal %d (%s) received", signum, strsignal(signum));
 	stop = 1;
-	pomp_loop_wakeup((struct pomp_loop *)s_ctx.loop);
+	pomp_loop_wakeup(s_ctx.loop.get());
 }
 
 int main(int argc, char *argv[])
@@ -493,7 +493,7 @@ int main(int argc, char *argv[])
 
 	/* Run loop until stop is requested */
 	while (!stop)
-		pomp_loop_wait_and_process((struct pomp_loop *)s_ctx.loop, -1);
+		pomp_loop_wait_and_process(s_ctx.loop.get(), -1);
 
 	/* Stop and cleanup */
 	context_stop(&s_ctx);
