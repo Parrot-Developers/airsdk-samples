@@ -439,7 +439,7 @@ static int context_init(struct context *ctx)
 		goto error;
 	} else {
 		/* Create vipc client */
-		ctx->vipcc = vipcc_new((s_ctx.loop.get(),
+		ctx->vipcc = vipcc_new(s_ctx.loop.get(),
 				&client_cbs,
 				vipc_info.be_cbs,
 				vipc_info.address,
