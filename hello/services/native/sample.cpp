@@ -20,10 +20,11 @@ ULOG_DECLARE_TAG(ULOG_TAG);
 #include <libtelemetry.h>
 #include <video-ipc/vipc_client.h>
 #include <video-ipc/vipc_client_cfg.h>
-#include <opencv2/opencv.hpp>
 
 #include <google/protobuf/empty.pb.h>
 #include <samples/hello/cv-service/messages.msghub.h>
+
+#include "processing.h"
 
 #define VIPC_DEPTH_MAP_STREAM	"fstcam_stereo_depth_filtered"
 #define TLM_SECTION_USER	"drone_controller"
@@ -108,11 +109,11 @@ struct context {
 	/* Video ipc frame dimensions */
 	struct vipc_dim frame_dim;
 
-	/* Depth frame */
-	cv::Mat depth_frame;
+	/* Processing result notification event */
+	struct pomp_evt *processing_evt;
 
-	/* Mask frame */
-	cv::Mat mask_frame;
+	/* Processing in background thread */
+	struct processing *processing;
 
 	/* Message hub */
 	msghub::MessageHub *msg;
@@ -182,24 +183,43 @@ static void context_clean(struct context *ctx)
 {
 	int res = 0;
 
+	if (ctx->processing != NULL) {
+		processing_destroy(ctx->processing);
+		ctx->processing = NULL;
+	}
+
+	if (ctx->processing_evt != NULL) {
+		res = pomp_evt_detach_from_loop(ctx->processing_evt, ctx->loop);
+		if (res < 0)
+			ULOG_ERRNO("pomp_evt_detach_from_loop", -res);
+		res = pomp_evt_destroy(ctx->processing_evt);
+		if (res < 0)
+			ULOG_ERRNO("pomp_evt_destroy", -res);
+		ctx->processing_evt = NULL;
+	}
+
 	delete ctx->msg;
+	ctx->msg = NULL;
 
 	if (ctx->vipcc != NULL) {
 		res = vipcc_destroy(ctx->vipcc);
 		if (res < 0)
 			ULOG_ERRNO("vipcc_destroy", -res);
+		ctx->vipcc = NULL;
 	}
 
 	if (ctx->producer != NULL) {
 		res = tlm_producer_destroy(ctx->producer);
 		if (res < 0)
 			ULOG_ERRNO("tlm_producer_destroy", -res);
+		ctx->producer = NULL;
 	}
 
 	if (ctx->consumer != NULL) {
 		res = tlm_consumer_destroy(ctx->consumer);
 		if (res < 0)
 			ULOG_ERRNO("tlm_consumer_destroy", -res);
+		ctx->consumer = NULL;
 	}
 }
 
@@ -219,11 +239,18 @@ static int context_start(struct context *ctx)
 		pomp::Address(MSGHUB_ADDR), 0666);
 	if (ctx->msg_channel == nullptr) {
 		ULOGE("Failed to start server channel on '%s'", MSGHUB_ADDR);
-		res = -EPERM;
+		return -EPERM;
 	}
 
 	ctx->msg->attachMessageHandler(&ctx->msg_cmd_handler);
 	ctx->msg->attachMessageSender(&ctx->msg_evt_sender, ctx->msg_channel);
+
+	/* Processing */
+	res = processing_start(ctx->processing);
+	if (res < 0) {
+		ULOG_ERRNO("processing_start", -res);
+		return res;
+	}
 
 	return 0;
 }
@@ -231,6 +258,9 @@ static int context_start(struct context *ctx)
 static int context_stop(struct context *ctx)
 {
 	int res = 0;
+
+	/* Processing */
+	processing_stop(ctx->processing);
 
 	/* msg */
 	ctx->msg->detachMessageSender(&ctx->msg_evt_sender);
@@ -244,6 +274,49 @@ static int context_stop(struct context *ctx)
 		ULOG_ERRNO("vipcc_stop", -res);
 
 	return res;
+}
+
+static void processing_evt_cb(struct pomp_evt *evt, void *userdata)
+{
+	int res = 0;
+	struct context *ud = (struct context *)userdata;
+	struct processing_output output;
+
+	/* Get result from processing object */
+	res = processing_get_output(ud->processing, &output);
+	if (res < 0) {
+		ULOG_ERRNO("processing_get_output", -res);
+		return;
+	}
+
+	/* Update telemetry output */
+	ud->tlm_data_out.algo.x = output.x;
+	ud->tlm_data_out.algo.y = output.y;
+	ud->tlm_data_out.algo.z = output.z;
+	ud->tlm_data_out.algo.depth_mean = output.depth_mean;
+	ud->tlm_data_out.algo.confidence = output.confidence;
+
+	/* Write in telemetry */
+	res = tlm_producer_put_sample(ud->producer, &output.ts);
+	if (res < 0)
+		ULOG_ERRNO("tlm_producer_put_sample", -res);
+
+	/* Send event message if required */
+	if (output.depth_mean <= CLOSE_DEPTH
+			&& ud->previous_depth_mean > CLOSE_DEPTH
+			&& !ud->is_close) {
+		const ::google::protobuf::Empty message;
+		ud->msg_evt_sender.close(message);
+		ud->is_close = true;
+	}
+	if (output.depth_mean >= FAR_DEPTH
+			&& ud->previous_depth_mean < FAR_DEPTH
+			&& ud->is_close) {
+		const ::google::protobuf::Empty message;
+		ud->msg_evt_sender.far(message);
+		ud->is_close = false;
+	}
+	ud->previous_depth_mean = output.depth_mean;
 }
 
 static void status_cb(struct vipcc_ctx *ctx,
@@ -263,8 +336,6 @@ static void status_cb(struct vipcc_ctx *ctx,
 
 	ud->frame_dim.width = st->width;
 	ud->frame_dim.height = st->height;
-	ud->mask_frame =
-		cv::Mat(ud->frame_dim.height, ud->frame_dim.width, CV_8UC1);
 
 	/* Start running */
 	context_start(ud);
@@ -276,63 +347,38 @@ static void frame_cb(struct vipcc_ctx *ctx,
 		     void *be_frame,
 		     void *userdata)
 {
-	struct context *ud = (struct context *)userdata;
-	int i, j;
-	struct timespec ts;
-	float depth_mean;
 	int res = 0;
+	struct context *ud = (struct context *)userdata;
+	struct processing_input input;
 
 	ULOGD("received frame %08x", frame->index);
 
-	if (!ud->msg_cmd_handler.getProcess()) {
-		vipcc_release(ctx, frame);
-		return;
-	}
+	/* Early exit if not asked to process frames */
+	if (!ud->msg_cmd_handler.getProcess())
+		goto out;
 
-	ud->tlm_data_out.algo.confidence = 0.f;
-
+	/* Sanity checks */
 	if (frame->width != ud->frame_dim.width) {
 		ULOGE("frame width (%d) different than status width (%d)",
 			frame->width, ud->frame_dim.width);
-		vipcc_release(ctx, frame);
-		return;
+		goto out;
 	}
 	if (frame->height != ud->frame_dim.height) {
 		ULOGE("frame height (%d) different than status height (%d)",
 			frame->height, ud->frame_dim.height);
-		vipcc_release(ctx, frame);
-		return;
+		goto out;
 	}
 	if (frame->num_planes != 1) {
 		ULOGE("wrong number of planes (%d)", frame->num_planes);
-		vipcc_release(ctx, frame);
-		return;
+		goto out;
 	}
 	if (frame->format != VACQ_PIX_FORMAT_RAW32) {
 		ULOGE("wrong format");
-		vipcc_release(ctx, frame);
-		return;
+		goto out;
 	}
 
-	ud->depth_frame = cv::Mat(ud->frame_dim.height, ud->frame_dim.width,
-			CV_32F, (void *)frame->planes[0].virt_addr,
-			frame->planes[0].stride);
-
-	ud->mask_frame.setTo(1);
-	for (i = 0; i < ud->depth_frame.rows; ++i) {
-		for (j = 0; j < ud->depth_frame.cols; ++j) {
-			if (ud->depth_frame.at<float>(i, j) < 0.f ||
-				ud->depth_frame.at<float>(i, j) == INFINITY)
-				ud->mask_frame.at<uint8_t>(i, j) = 0;
-		}
-	}
-
-	depth_mean = (float)cv::mean(ud->depth_frame, ud->mask_frame).val[0];
-
-	/* Save timestamp of the frame */
-	ts.tv_sec = frame->ts_sof_ns / 1000000000UL;
-	ts.tv_nsec = frame->ts_sof_ns % 1000000000UL;
-
+	/* Get latest telemetry data */
+	/* FIXME: use the ts from frame ? */
 	res = tlm_consumer_get_sample_with_timestamp(ud->consumer, NULL,
 			TLM_LATEST, &ud->tlm_data_in.timestamp);
 	if (res < 0 && res != -ENOENT) {
@@ -340,33 +386,26 @@ static void frame_cb(struct vipcc_ctx *ctx,
 		goto out;
 	}
 
-	ud->tlm_data_out.algo.x = ud->tlm_data_in.position_absolute.x;
-	ud->tlm_data_out.algo.y = ud->tlm_data_in.position_absolute.y;
-	ud->tlm_data_out.algo.z = ud->tlm_data_in.position_absolute.z;
-	ud->tlm_data_out.algo.depth_mean = depth_mean;
-	ud->tlm_data_out.algo.confidence = 1.f;
+	/* Setup input structure for processing */
+	memset(&input, 0, sizeof(input));
+	input.frame = frame;
+	input.position_absolute.x = ud->tlm_data_in.position_absolute.x;
+	input.position_absolute.y = ud->tlm_data_in.position_absolute.y;
+	input.position_absolute.z = ud->tlm_data_in.position_absolute.z;
 
-	/* Send event message if required */
-	if (depth_mean <= CLOSE_DEPTH && ud->previous_depth_mean > CLOSE_DEPTH
-			&& !ud->is_close) {
-		const ::google::protobuf::Empty message;
-		ud->msg_evt_sender.close(message);
-		ud->is_close = true;
+	res = processing_step(ud->processing, &input);
+	if (res < 0) {
+		ULOG_ERRNO("processing_step", -res);
+		goto out;
 	}
-	if (depth_mean >= FAR_DEPTH && ud->previous_depth_mean < FAR_DEPTH
-			&& ud->is_close) {
-		const ::google::protobuf::Empty message;
-		ud->msg_evt_sender.far(message);
-		ud->is_close = false;
-	}
-	ud->previous_depth_mean = depth_mean;
 
+	/* The frame has been given to the processing object */
+	frame = NULL;
+
+	/* In case of error, need to release the input frame */
 out:
-	ud->depth_frame.release();
-	vipcc_release(ctx, frame);
-	res = tlm_producer_put_sample(ud->producer, &ts);
-	if (res < 0)
-		ULOG_ERRNO("tlm_producer_put_sample", -res);
+	if (frame != NULL)
+		vipcc_release(ctx, frame);
 }
 
 static void
@@ -458,6 +497,27 @@ static int context_init(struct context *ctx)
 	if (ctx->msg == nullptr) {
 		res = -ENOMEM;
 		ULOG_ERRNO("msg_new", -res);
+		goto error;
+	}
+
+	/* Create processing notification event */
+	ctx->processing_evt = pomp_evt_new();
+	if (ctx->processing_evt == NULL) {
+		res = -ENOMEM;
+		ULOG_ERRNO("pomp_evt_new", -res);
+		goto error;
+	}
+	res = pomp_evt_attach_to_loop(ctx->processing_evt, ctx->loop.get(),
+			&processing_evt_cb, ctx);
+	if (res < 0) {
+		ULOG_ERRNO("pomp_evt_attach_to_loop", -res);
+		goto error;
+	}
+
+	/* Create processing object */
+	res = processing_new(ctx->processing_evt, &ctx->processing);
+	if (res < 0) {
+		ULOG_ERRNO("processing_new", -res);
 		goto error;
 	}
 

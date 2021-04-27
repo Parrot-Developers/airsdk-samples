@@ -94,7 +94,7 @@ LOCAL_MODULE := airsdk-hello-cv-service
 LOCAL_CATEGORY_PATH := airsdk/missions/samples/hello
 LOCAL_DESTDIR := $(airsdk-hello.payload-dir)/services
 
-LOCAL_SRC_FILES := services/native/sample.cpp
+LOCAL_SRC_FILES := services/native/processing.cpp services/native/sample.cpp
 
 LOCAL_LIBRARIES := \
 	libairsdk-hello-cv-service-msghub \
