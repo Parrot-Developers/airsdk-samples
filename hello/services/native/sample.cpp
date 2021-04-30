@@ -16,7 +16,7 @@
 #include <ulog.h>
 ULOG_DECLARE_TAG(ULOG_TAG);
 
-#include <libpomp.h>
+#include <libpomp.hpp>
 #include <libtelemetry.h>
 #include <video-ipc/vipc_client.h>
 #include <video-ipc/vipc_client_cfg.h>
