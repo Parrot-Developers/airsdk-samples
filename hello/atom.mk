@@ -43,6 +43,7 @@ LOCAL_MODULE := libmission-airsdk-hello-pbpy
 LOCAL_DESCRIPTION := Protobuf python code for hello mission
 LOCAL_CATEGORY_PATH := airsdk/missions/samples/hello
 LOCAL_LIBRARIES := \
+	parrot-protobuf-extensions-py \
 	protobuf-python
 
 # Hello mission protobuf library (Python)

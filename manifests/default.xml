@@ -12,7 +12,8 @@
     <project name="dragon_buildext_mission" path="build/dragon_buildext_mission"/>
     <project name="dragon_buildext_sign" path="build/dragon_buildext_sign"/>
 
-    <!-- Air SDK Doc -->
+    <!-- AirSDK samples -->
+    <project name="protobuf-extensions" path="packages/protobuf-extensions"/>
     <project name="airsdk-doc" path="packages/airsdk-doc">
         <linkfile src="samples/hello/product" dest="products/hello"/>
         <linkfile src="samples/README.md" dest="README"/>

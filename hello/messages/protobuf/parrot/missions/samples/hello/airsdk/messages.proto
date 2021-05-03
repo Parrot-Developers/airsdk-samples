@@ -2,12 +2,15 @@ syntax = "proto3";
 
 package parrot.missions.samples.hello.airsdk.messages;
 
+import 'google/protobuf/empty.proto';
+import 'parrot/protobuf/extensions.proto';
+
 // for the application-side of the mission
 // (ie. "com" prefix + "drone" intermediate package)
 option java_package = "com.parrot.drone.missions.samples.hello.airdsk";
 option java_outer_classname = "Hello";
 
-import 'google/protobuf/empty.proto';
+option (olympe_package) = "parrot.missions.samples.hello";
 
 // Union of all possible commands of this package.
 message Command {
