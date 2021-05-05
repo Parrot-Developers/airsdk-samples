@@ -1,5 +1,4 @@
-import logging
-
+from fsup.genmission import AbstractMission
 from fsup.missions.default.takeoff.stage import TAKEOFF_STAGE as DEF_TAKEOFF_STAGE
 from fsup.missions.default.hovering.stage import HOVERING_STAGE as DEF_HOVERING_STAGE
 from fsup.missions.default.landing.stage import LANDING_STAGE as DEF_LANDING_STAGE
@@ -23,11 +22,7 @@ UID = "com.parrot.missions.samples.hello"
 from .ground.stage import GROUND_STAGE
 from .flying.stage import FLYING_STAGE
 
-class Mission(object):
-    def __init__(self, mission_environment):
-        self.env = mission_environment
-        self.mc = self.env.mc
-        self.log = logging.getLogger()
+class Mission(AbstractMission):
 
     def on_load(self):
         ##################################
