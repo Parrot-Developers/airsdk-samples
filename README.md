@@ -48,9 +48,9 @@ documentation.
 
 ```bash
 # Simulator upload
-curl -X PUT "http://anafi2.local/api/v1/mission/missions/?allow_overwrite=yes" --data-binary @"out/hello-pc/images/com.parrot.missions.samples.hello.tar.gz"
+curl -X PUT "http://anafi-ai.local/api/v1/mission/missions/?allow_overwrite=yes" --data-binary @"out/hello-pc/images/com.parrot.missions.samples.hello.tar.gz"
 
 # Drone upload (and set mission to default)
-curl -X PUT "http://anafi2.local/api/v1/mission/missions/?allow_overwrite=yes&is_default=yes" --data-binary @"out/hello-classic/images/com.parrot.missions.samples.hello.tar.gz"
+curl -X PUT "http://anafi-ai.local/api/v1/mission/missions/?allow_overwrite=yes&is_default=yes" --data-binary @"out/hello-classic/images/com.parrot.missions.samples.hello.tar.gz"
 ```
 
