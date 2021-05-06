@@ -36,8 +36,6 @@ ULOG_DECLARE_TAG(ULOG_TAG);
 #define FAR_DEPTH		1.2f /* [m] */
 
 struct tlm_data_in {
-	struct timespec timestamp;
-
 	struct {
 		float x;
 		float y;
@@ -350,6 +348,7 @@ static void frame_cb(struct vipcc_ctx *ctx,
 	int res = 0;
 	struct context *ud = (struct context *)userdata;
 	struct processing_input input;
+	struct timespec timestamp;
 
 	ULOGD("received frame %08x", frame->index);
 
@@ -378,9 +377,9 @@ static void frame_cb(struct vipcc_ctx *ctx,
 	}
 
 	/* Get latest telemetry data */
-	/* FIXME: use the ts from frame ? */
-	res = tlm_consumer_get_sample_with_timestamp(ud->consumer, NULL,
-			TLM_LATEST, &ud->tlm_data_in.timestamp);
+	timestamp.tv_sec = frame->ts_sof_ns / 1000000000UL;
+	timestamp.tv_nsec = frame->ts_sof_ns % 1000000000UL;
+	res = tlm_consumer_get_sample(ud->consumer, &timestamp, TLM_CLOSEST);
 	if (res < 0 && res != -ENOENT) {
 		ULOG_ERRNO("tlm_consumer_get_sample_with_timestamp", -res);
 		goto out;
