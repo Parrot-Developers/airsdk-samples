@@ -7,7 +7,7 @@ import 'parrot/protobuf/extensions.proto';
 
 // for the application-side of the mission
 // (ie. "com" prefix + "drone" intermediate package)
-option java_package = "com.parrot.drone.missions.samples.hello.airdsk";
+option java_package = "com.parrot.drone.missions.samples.hello.airsdk";
 option java_outer_classname = "Hello";
 
 option (olympe_package) = "parrot.missions.samples.hello";
@@ -15,9 +15,9 @@ option (olympe_package) = "parrot.missions.samples.hello";
 // Union of all possible commands of this package.
 message Command {
     oneof id {
-        /* Ask to start say hello (ground) */
+        // Ask to start say hello (ground)
         google.protobuf.Empty say = 1;
-        /* Ask to stop say hello (ground) */
+        // Ask to stop say hello (ground)
         google.protobuf.Empty hold = 2;
     }
 }
@@ -25,7 +25,7 @@ message Command {
 // Union of all possible events of this package.
 message Event {
     oneof id {
-        /* Count of hello (ground) */
+        // Count of hello (ground)
         uint32 count = 1;
     }
 }
