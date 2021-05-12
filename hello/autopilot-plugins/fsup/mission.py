@@ -6,13 +6,13 @@ from fsup.missions.default.critical.stage import CRITICAL_STAGE as DEF_CRITICAL_
 from fsup.missions.default.mission import TRANSITIONS as DEF_TRANSITIONS
 
 # messages exchanged with mission UI
-import parrot.missions.samples.hello.airsdk.messages_pb2 as HelloMessages
+import parrot.missions.samples.hello.airsdk.messages_pb2 as hello_messages
 
 # messages exchanged with the guidance ground mode
-import samples.hello.guidance.messages_pb2 as HelloGdncGroundModeMessages
+import samples.hello.guidance.messages_pb2 as hello_gdnc_mode_messages
 
 # messages exchanged with the cv service
-import samples.hello.cv_service.messages_pb2 as HelloCvServiceMessages
+import samples.hello.cv_service.messages_pb2 as hello_cv_service_messages
 
 # events that are not expressed as protobuf messages
 import fsup.services.events as events
@@ -40,7 +40,7 @@ class Mission(AbstractMission):
         # 'attach' is called in 'on_activate' to start routing commands/events
         # The airsdk service assumes that the mission is a server: as such it
         # sends events and receive commands.
-        self.ext_ui_msgs = self.env.make_airsdk_service_pair(HelloMessages)
+        self.ext_ui_msgs = self.env.make_airsdk_service_pair(hello_messages)
 
     def on_unload(self):
         ####################################
@@ -62,7 +62,7 @@ class Mission(AbstractMission):
 
         # Attach Guidance ground mode messages
         self.gdnc_grd_mode_msgs = self.mc.attach_client_service_pair(
-            self.mc.gdnc_channel, HelloGdncGroundModeMessages, True)
+            self.mc.gdnc_channel, hello_gdnc_mode_messages, True)
 
         # Create Computer Vision service channel
         self.cv_service_msgs_channel = self.mc.start_client_channel(
@@ -70,7 +70,7 @@ class Mission(AbstractMission):
 
         # Attach Computer Vision service messages
         self.cv_service_msgs = self.mc.attach_client_service_pair(
-            self.cv_service_msgs_channel, HelloCvServiceMessages, True)
+            self.cv_service_msgs_channel, hello_cv_service_messages, True)
 
         # For debugging, also observe UI messages manually using an observer
         self._dbg_observer = self.ext_ui_msgs.cmd.observe({
