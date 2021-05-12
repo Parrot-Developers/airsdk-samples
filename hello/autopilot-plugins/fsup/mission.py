@@ -23,6 +23,13 @@ from .ground.stage import GROUND_STAGE
 from .flying.stage import FLYING_STAGE
 
 class Mission(AbstractMission):
+    def __init__(self, env):
+        super().__init__(env)
+        self.ext_ui_msgs = None
+        self.cv_service_msgs_channel = None
+        self.cv_service_msgs = None
+        self.gdnc_grd_mode_msgs = None
+        self._dbg_observer = None
 
     def on_load(self):
         ##################################
@@ -36,9 +43,9 @@ class Mission(AbstractMission):
         self.ext_ui_msgs = self.env.make_airsdk_service_pair(HelloMessages)
 
     def on_unload(self):
-        ##################################
+        ####################################
         # Messages / communication cleanup #
-        ##################################
+        ####################################
         self.ext_ui_msgs = None
 
     def on_activate(self):
@@ -93,9 +100,9 @@ class Mission(AbstractMission):
         # Stop Computer Vision service processing
         self.cv_service_msgs.cmd.sender.set_process(False)
 
-        ##################################
+        ####################################
         # Messages / communication cleanup #
-        ##################################
+        ####################################
         # For debugging, unobserve
         self._dbg_observer.unobserve()
         self._dbg_observer = None
