@@ -27,5 +27,9 @@ message Event {
     oneof id {
         // Count of hello (ground)
         uint32 count = 1;
+        // Stereo sees something close (all)
+        bool stereo_close = 2;
+        // Drone is moving/steady (ground)
+        bool drone_moving = 3;
     }
 }

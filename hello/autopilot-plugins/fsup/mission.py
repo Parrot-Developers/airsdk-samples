@@ -18,6 +18,10 @@ import samples.hello.cv_service.messages_pb2 as hello_cv_service_messages
 # events that are not expressed as protobuf messages
 import fsup.services.events as events
 
+# messages exchanged with the drone controller
+import drone_controller.drone_controller_pb2 as dctl_messages
+import colibrylite.motion_state_pb2 as cbry_motion_state
+
 UID = "com.parrot.missions.samples.hello"
 
 from .ground.stage import GROUND_STAGE
@@ -30,7 +34,8 @@ class Mission(AbstractMission):
         self.cv_service_msgs_channel = None
         self.cv_service_msgs = None
         self.gdnc_grd_mode_msgs = None
-        self._dbg_observer = None
+        self.observer = None
+        self.dbg_observer = None
 
     def on_load(self):
         ##################################
@@ -70,9 +75,22 @@ class Mission(AbstractMission):
         self.cv_service_msgs = self.mc.attach_client_service_pair(
             self.cv_service_msgs_channel, hello_cv_service_messages, True)
 
+        # For forwarding, observe messages using an observer
+        self.observer = self.mc.observe({
+            events.Channel.CONNECTED:
+            lambda _, channel: self._on_connected(channel),
+            msg_id(hello_cv_service_messages.Event, 'close'):
+            lambda *args: self._send_to_ext_ui_stereo_close_state(True),
+            msg_id(hello_cv_service_messages.Event, 'far'):
+            lambda *args: self._send_to_ui_stereo_close_state(False),
+            msg_id(dctl_messages.Event, 'motion_state_changed'):
+            lambda _, msg: self._send_to_ui_drone_motion_state(
+                msg.motion_state_changed == cbry_motion_state.MOVING),
+        })
+
         # For debugging, also observe UI messages manually using an observer
-        self._dbg_observer = self.ext_ui_msgs.cmd.observe({
-            events.Service.MESSAGE: self._on_msg_evt
+        self.dbg_observer = self.ext_ui_msgs.cmd.observe({
+            events.Service.MESSAGE: self._on_ui_msg_cmd
         })
 
         ############
@@ -81,7 +99,19 @@ class Mission(AbstractMission):
         # Start Computer Vision service processing
         self.cv_service_msgs.cmd.sender.set_process(True)
 
-    def _on_msg_evt(self, event, message):
+    def _on_connected(self, channel):
+        if channel == self.env.airsdk_channel:
+            self.log.info("connected to airsdk channel")
+        elif channel == self.cv_service_msgs_channel:
+            self.log.info("connected to cv service channel")
+
+    def _send_to_ui_stereo_camera_close_state(self, state):
+        self.ext_ui_msgs.evt.sender.stereo_close(state)
+
+    def _send_to_ui_drone_motion_state(self, state):
+        self.ext_ui_msgs.evt.sender.drone_moving(state)
+
+    def _on_ui_msg_cmd(self, event, message):
         # It is recommended that log functions are only called with a
         # format string and additional arguments, instead of a string
         # that is already interpolated (e.g. with % or .format()),
@@ -89,7 +119,7 @@ class Mission(AbstractMission):
         # is due to the fact that string interpolation need only be
         # done when the record is actually logged (for example, by
         # default log.debug(...) is not logged).
-        self.log.debug("%s: message %s", UID, message)
+        self.log.debug("%s: UI command message %s", UID, message)
 
     def on_deactivate(self):
         ############
@@ -101,9 +131,13 @@ class Mission(AbstractMission):
         ####################################
         # Messages / communication cleanup #
         ####################################
+        # For forwarding, unobserve
+        self.observer.unobserve()
+        self.observer = None
+
         # For debugging, unobserve
-        self._dbg_observer.unobserve()
-        self._dbg_observer = None
+        self.dbg_observer.unobserve()
+        self.dbg_observer = None
 
         # Detach Guidance ground mode messages
         self.mc.detach_client_service_pair(self.cv_service_msgs)
