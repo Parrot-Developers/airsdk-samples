@@ -4,8 +4,6 @@ import colibrylite.estimation_mode_pb2 as cbry_est
 from fsup.missions.default.ground.stage import GROUND_STAGE as DEF_GROUND_STAGE
 import samples.hello.guidance.messages_pb2 as HelloGdncGroundModeMessages
 
-import fsup.services.events as events
-
 from ..mission import UID
 
 _STATES_TO_REMOVE = [
