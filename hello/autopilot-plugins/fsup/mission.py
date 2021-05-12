@@ -1,3 +1,4 @@
+from fsup.utils import msg_id
 from fsup.genmission import AbstractMission
 from fsup.missions.default.takeoff.stage import TAKEOFF_STAGE as DEF_TAKEOFF_STAGE
 from fsup.missions.default.hovering.stage import HOVERING_STAGE as DEF_HOVERING_STAGE
@@ -35,9 +36,6 @@ class Mission(AbstractMission):
         ##################################
         # Messages / communication setup #
         ##################################
-        # Create a ServicePair instance without attaching it immediately
-        # usefull to access the 'idx' field in the transition table.
-        # 'attach' is called in 'on_activate' to start routing commands/events
         # The airsdk service assumes that the mission is a server: as such it
         # sends events and receive commands.
         self.ext_ui_msgs = self.env.make_airsdk_service_pair(hello_messages)
@@ -133,22 +131,17 @@ class Mission(AbstractMission):
         ]
 
     def transitions(self):
-        # Service objects hold an object named "idx" (index), which
-        # itself contains as many fields as there are message types
-        # for in the associated protobuf message (one for each oneof
-        # value).
-
         # Each field is a string that represents an event in the
         # state-machine; it means "this particular message from that
-        # service was received". In the state-machine, an event is
+        # component was received". In the state-machine, an event is
         # used to trigger a transition from a source state to a target
         # state.
 
         TRANSITIONS = [
             # "say/hold" messages from the mission UI alternate between "say"
             # and "idle" states in the ground stage.
-            [self.ext_ui_msgs.cmd.idx.say, 'ground.idle', 'ground.say'],
-            [self.ext_ui_msgs.cmd.idx.hold, 'ground.say', 'ground.idle'],
+            [msg_id(hello_messages.Command, 'say'), 'ground.idle', 'ground.say'],
+            [msg_id(hello_messages.Command, 'hold'), 'ground.say', 'ground.idle'],
         ]
 
         return TRANSITIONS + DEF_TRANSITIONS
