@@ -52,8 +52,8 @@ static void do_step(struct processing *self,
 	cv::Mat mask_frame(
 			input->frame->height,
 			input->frame->width,
-			CV_8UC1);
-	mask_frame.setTo(1);
+			CV_8UC1,
+			1);
 
 	for (i = 0; i < depth_frame.rows; ++i) {
 		for (j = 0; j < depth_frame.cols; ++j) {
