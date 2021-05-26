@@ -6,5 +6,13 @@
 				"sdk_ids" : ["091a"]
 			}
 		}
+	},
+	"signature": {
+		"classic": {
+			"images": [
+				{ "in": "com.parrot.missions.samples.hello.tar.gz" }
+			],
+			"script": "common/scripts/sign-image-prod.sh"
+		}
 	}
 }
