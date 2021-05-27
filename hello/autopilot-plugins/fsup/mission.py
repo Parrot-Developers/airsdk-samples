@@ -80,9 +80,9 @@ class Mission(AbstractMission):
             events.Channel.CONNECTED:
             lambda _, channel: self._on_connected(channel),
             msg_id(hello_cv_service_messages.Event, 'close'):
-            lambda *args: self._send_to_ext_ui_stereo_close_state(True),
+            lambda *args: self._send_to_ui_stereo_camera_close_state(True),
             msg_id(hello_cv_service_messages.Event, 'far'):
-            lambda *args: self._send_to_ui_stereo_close_state(False),
+            lambda *args: self._send_to_ui_stereo_camera_close_state(False),
             msg_id(dctl_messages.Event, 'motion_state_changed'):
             lambda _, msg: self._send_to_ui_drone_motion_state(
                 msg.motion_state_changed == cbry_motion_state.MOVING),
