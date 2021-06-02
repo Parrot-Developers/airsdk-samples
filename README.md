@@ -54,3 +54,8 @@ curl -X PUT "http://anafi-ai.local/api/v1/mission/missions/?allow_overwrite=yes"
 curl -X PUT "http://anafi-ai.local/api/v1/mission/missions/?allow_overwrite=yes&is_default=yes" --data-binary @"out/hello-classic/images/com.parrot.missions.samples.hello.tar.gz"
 ```
 
+```bash
+# Both
+curl -X PUT http://anafi-ai.local/api/v1/system/reboot
+```
+
