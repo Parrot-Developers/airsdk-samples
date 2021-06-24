@@ -139,11 +139,11 @@ class Mission(AbstractMission):
         self.dbg_observer.unobserve()
         self.dbg_observer = None
 
-        # Detach Guidance ground mode messages
+        # Detach Computer Vision service messages
         self.mc.detach_client_service_pair(self.cv_service_msgs)
         self.cv_service_msgs = None
 
-        # Detach Computer Vision service messages
+        # Detach Guidance ground mode messages
         self.mc.detach_client_service_pair(self.gdnc_grd_mode_msgs)
         self.gdnc_grd_mode_msgs = None
 
