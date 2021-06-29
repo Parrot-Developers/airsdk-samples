@@ -116,30 +116,30 @@ class HelloGroundMode(gdnc_core.Mode):
         fcam_ref = self.output.front_cam_reference
 
         fcam_ref.yaw.ctrl_mode = cam_cm_pb2.POSITION
-        fcam_ref.yaw.frame_of_ref = cam_for_pb2.ABSOLUTE
+        fcam_ref.yaw.frame_of_ref = cam_for_pb2.NED
         fcam_ref.yaw.position = self.tlm_dctl['attitude_euler_angles.yaw']
         fcam_ref.pitch.ctrl_mode = cam_cm_pb2.POSITION
-        fcam_ref.pitch.frame_of_ref = cam_for_pb2.ABSOLUTE
+        fcam_ref.pitch.frame_of_ref = cam_for_pb2.NED
         fcam_ref.pitch.position = \
             HelloGroundMode.FCAM_PITCH_ANIMATION[self.front_cam_pitch_index] \
             * np.pi / 180.0
         fcam_ref.roll.ctrl_mode = cam_cm_pb2.POSITION
-        fcam_ref.roll.frame_of_ref = cam_for_pb2.ABSOLUTE
+        fcam_ref.roll.frame_of_ref = cam_for_pb2.NED
         fcam_ref.roll.position = 0.0
         # Stereo
         self.output.has_stereo_cam_reference = True
         stcam_ref = self.output.stereo_cam_reference
 
         stcam_ref.yaw.ctrl_mode = cam_cm_pb2.POSITION
-        stcam_ref.yaw.frame_of_ref = cam_for_pb2.ABSOLUTE
+        stcam_ref.yaw.frame_of_ref = cam_for_pb2.NED
         stcam_ref.yaw.position = self.tlm_dctl['attitude_euler_angles.yaw']
 
         stcam_ref.pitch.ctrl_mode = cam_cm_pb2.POSITION
-        stcam_ref.pitch.frame_of_ref = cam_for_pb2.ABSOLUTE
+        stcam_ref.pitch.frame_of_ref = cam_for_pb2.NED
         stcam_ref.pitch.position = self.tlm_dctl['attitude_euler_angles.pitch']
 
         stcam_ref.roll.ctrl_mode = cam_cm_pb2.POSITION
-        stcam_ref.roll.frame_of_ref = cam_for_pb2.ABSOLUTE
+        stcam_ref.roll.frame_of_ref = cam_for_pb2.NED
         stcam_ref.roll.position = self.tlm_dctl['attitude_euler_angles.roll']
 
     def _timer_cb(self):
