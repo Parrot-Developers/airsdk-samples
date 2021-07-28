@@ -25,14 +25,15 @@ Before building, you need to get AirSDK in your work repository with the
 following command (Ubuntu 18.04 LTS):
 
 ```bash
-# Drone build
-./build.sh -p classic -t download-base-sdk
-
 # Simulator build
 ./build.sh -p pc -t download-base-sdk
+
+# Drone build
+./build.sh -p classic -t download-base-sdk
 ```
 
 Then, you can build with the following command:
+
 ```bash
 # Simulator build
 ./build.sh -p hello-pc -t all -j
