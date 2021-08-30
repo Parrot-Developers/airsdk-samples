@@ -22,7 +22,7 @@
 ## Build
 
 Before building, you need to get AirSDK in your work repository with the
-following command (Ubuntu 18.04 LTS):
+following command:
 
 ```bash
 # Simulator build
@@ -49,14 +49,9 @@ documentation.
 
 ```bash
 # Simulator upload
-curl -X PUT "http://anafi-ai.local/api/v1/mission/missions/?allow_overwrite=yes" --data-binary @"out/hello-pc/images/com.parrot.missions.samples.hello.tar.gz"
+./build.sh -p hello-pc -t sync --reboot
 
 # Drone upload (and set mission to default)
-curl -X PUT "http://anafi-ai.local/api/v1/mission/missions/?allow_overwrite=yes&is_default=yes" --data-binary @"out/hello-classic/images/com.parrot.missions.samples.hello.tar.gz"
-```
-
-```bash
-# Both
-curl -X PUT http://anafi-ai.local/api/v1/system/reboot
+./build.sh -p hello-classic -t sync --is-default --reboot
 ```
 
