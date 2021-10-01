@@ -134,11 +134,11 @@ struct context {
 
 static const struct tlm_reg_field s_tlm_data_in_fields[] = {
 	TLM_REG_FIELD_SCALAR_EX(struct tlm_data_in, velocity.x,
-			"linear_velocity_ned.x", TLM_TYPE_FLOAT32),
+			"linear_velocity_absolute.x", TLM_TYPE_FLOAT32),
 	TLM_REG_FIELD_SCALAR_EX(struct tlm_data_in, velocity.y,
-			"linear_velocity_ned.y", TLM_TYPE_FLOAT32),
+			"linear_velocity_absolute.y", TLM_TYPE_FLOAT32),
 	TLM_REG_FIELD_SCALAR_EX(struct tlm_data_in, velocity.z,
-			"linear_velocity_ned.z", TLM_TYPE_FLOAT32),
+			"linear_velocity_absolute.z", TLM_TYPE_FLOAT32),
 
 	TLM_REG_FIELD_SCALAR_EX(struct tlm_data_in, position_absolute.x,
 			"position_absolute.x", TLM_TYPE_FLOAT32),
