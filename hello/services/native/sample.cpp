@@ -46,7 +46,7 @@ struct tlm_data_in {
 		float x;
 		float y;
 		float z;
-	} position_absolute;
+	} position_global;
 
 	struct {
 		float yaw;
@@ -134,18 +134,18 @@ struct context {
 
 static const struct tlm_reg_field s_tlm_data_in_fields[] = {
 	TLM_REG_FIELD_SCALAR_EX(struct tlm_data_in, velocity.x,
-			"linear_velocity_absolute.x", TLM_TYPE_FLOAT32),
+			"linear_velocity_global.x", TLM_TYPE_FLOAT32),
 	TLM_REG_FIELD_SCALAR_EX(struct tlm_data_in, velocity.y,
-			"linear_velocity_absolute.y", TLM_TYPE_FLOAT32),
+			"linear_velocity_global.y", TLM_TYPE_FLOAT32),
 	TLM_REG_FIELD_SCALAR_EX(struct tlm_data_in, velocity.z,
-			"linear_velocity_absolute.z", TLM_TYPE_FLOAT32),
+			"linear_velocity_global.z", TLM_TYPE_FLOAT32),
 
-	TLM_REG_FIELD_SCALAR_EX(struct tlm_data_in, position_absolute.x,
-			"position_absolute.x", TLM_TYPE_FLOAT32),
-	TLM_REG_FIELD_SCALAR_EX(struct tlm_data_in, position_absolute.y,
-			"position_absolute.y", TLM_TYPE_FLOAT32),
-	TLM_REG_FIELD_SCALAR_EX(struct tlm_data_in, position_absolute.z,
-			"position_absolute.z", TLM_TYPE_FLOAT32),
+	TLM_REG_FIELD_SCALAR_EX(struct tlm_data_in, position_global.x,
+			"position_global.x", TLM_TYPE_FLOAT32),
+	TLM_REG_FIELD_SCALAR_EX(struct tlm_data_in, position_global.y,
+			"position_global.y", TLM_TYPE_FLOAT32),
+	TLM_REG_FIELD_SCALAR_EX(struct tlm_data_in, position_global.z,
+			"position_global.z", TLM_TYPE_FLOAT32),
 
 	TLM_REG_FIELD_SCALAR_EX(struct tlm_data_in, attitude.yaw,
 			"attitude_euler_angles.yaw", TLM_TYPE_FLOAT32),
@@ -388,9 +388,9 @@ static void frame_cb(struct vipcc_ctx *ctx,
 	/* Setup input structure for processing */
 	memset(&input, 0, sizeof(input));
 	input.frame = frame;
-	input.position_absolute.x = ud->tlm_data_in.position_absolute.x;
-	input.position_absolute.y = ud->tlm_data_in.position_absolute.y;
-	input.position_absolute.z = ud->tlm_data_in.position_absolute.z;
+	input.position_global.x = ud->tlm_data_in.position_global.x;
+	input.position_global.y = ud->tlm_data_in.position_global.y;
+	input.position_global.z = ud->tlm_data_in.position_global.z;
 
 	res = processing_step(ud->processing, &input);
 	if (res < 0) {

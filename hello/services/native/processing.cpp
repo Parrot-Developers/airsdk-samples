@@ -64,9 +64,9 @@ static void do_step(struct processing *self,
 	}
 	depth_mean = cv::mean(depth_frame, mask_frame).val[0];
 
-	output->x = input->position_absolute.x;
-	output->y = input->position_absolute.y;
-	output->z = input->position_absolute.z;
+	output->x = input->position_global.x;
+	output->y = input->position_global.y;
+	output->z = input->position_global.z;
 	output->depth_mean = depth_mean;
 	output->confidence = 1.0f;
 

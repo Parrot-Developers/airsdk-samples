@@ -13,7 +13,7 @@ struct processing_input {
 		float x;
 		float y;
 		float z;
-	} position_absolute;
+	} position_global;
 };
 
 struct processing_output {
