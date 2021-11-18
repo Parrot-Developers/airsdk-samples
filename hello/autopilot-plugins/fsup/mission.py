@@ -78,7 +78,7 @@ class Mission(AbstractMission):
         # For forwarding, observe messages using an observer
         self.observer = self.mc.observe({
             events.Channel.CONNECTED:
-            lambda _, channel: self._on_connected(channel),
+            lambda _, channel: self._on_channel_connected(channel),
             msg_id(hello_cv_service_messages.Event, 'close'):
             lambda *args: self._send_to_ui_stereo_camera_close_state(True),
             msg_id(hello_cv_service_messages.Event, 'far'):
@@ -99,7 +99,7 @@ class Mission(AbstractMission):
         # Start Computer Vision service processing
         self.cv_service_msgs.cmd.sender.set_process(True)
 
-    def _on_connected(self, channel):
+    def _on_channel_connected(self, channel):
         if channel == self.env.airsdk_channel:
             self.log.info("connected to airsdk channel")
         elif channel == self.cv_service_msgs_channel:
