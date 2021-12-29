@@ -67,19 +67,14 @@ class HelloServiceCommandHandler
 	: public ::samples::hello::cv_service::messages::msghub::
 		  CommandHandler {
 public:
-	inline HelloServiceCommandHandler() : mProcess(false) {}
+	inline HelloServiceCommandHandler(struct context *ctx) : mCtx(ctx) {}
 
-	void setProcess(bool msg) override
-	{
-		mProcess = msg;
-	}
+	virtual void processingStart(const ::google::protobuf::Empty &args) override;
 
-	bool getProcess()
-	{
-		return mProcess;
-	}
+	virtual void processingStop(const ::google::protobuf::Empty &args) override;
+
 private:
-	bool mProcess;
+	struct context *mCtx;
 };
 
 struct context {
@@ -130,6 +125,8 @@ struct context {
 
 	/* Close state */
 	bool is_close;
+
+	inline context() : msg_cmd_handler(this) {}
 };
 
 static const struct tlm_reg_field s_tlm_data_in_fields[] = {
@@ -176,7 +173,6 @@ static struct context s_ctx;
 /* Stop flag, set to 1 by signal handler to exit cleanly */
 static volatile int stop;
 
-
 static void context_clean(struct context *ctx)
 {
 	int res = 0;
@@ -199,13 +195,6 @@ static void context_clean(struct context *ctx)
 	delete ctx->msg;
 	ctx->msg = NULL;
 
-	if (ctx->vipcc != NULL) {
-		res = vipcc_destroy(ctx->vipcc);
-		if (res < 0)
-			ULOG_ERRNO("vipcc_destroy", -res);
-		ctx->vipcc = NULL;
-	}
-
 	if (ctx->producer != NULL) {
 		res = tlm_producer_destroy(ctx->producer);
 		if (res < 0)
@@ -223,15 +212,6 @@ static void context_clean(struct context *ctx)
 
 static int context_start(struct context *ctx)
 {
-	int res = 0;
-
-	/* vipc */
-	res = vipcc_start(ctx->vipcc);
-	if (res < 0) {
-		ULOG_ERRNO("vipc_start", -res);
-		return res;
-	}
-
 	/* msg */
 	ctx->msg_channel = ctx->msg->startServerChannel(
 		pomp::Address(MSGHUB_ADDR), 0666);
@@ -243,13 +223,6 @@ static int context_start(struct context *ctx)
 	ctx->msg->attachMessageHandler(&ctx->msg_cmd_handler);
 	ctx->msg->attachMessageSender(&ctx->msg_evt_sender, ctx->msg_channel);
 
-	/* Processing */
-	res = processing_start(ctx->processing);
-	if (res < 0) {
-		ULOG_ERRNO("processing_start", -res);
-		return res;
-	}
-
 	return 0;
 }
 
@@ -259,17 +232,14 @@ static int context_stop(struct context *ctx)
 
 	/* Processing */
 	processing_stop(ctx->processing);
+	/* Stop vipc and processing */
+	ctx->msg_cmd_handler.processingStop(::google::protobuf::Empty());
 
 	/* msg */
 	ctx->msg->detachMessageSender(&ctx->msg_evt_sender);
 	ctx->msg->detachMessageHandler(&ctx->msg_cmd_handler);
 	ctx->msg->stop();
 	ctx->msg_channel = nullptr;
-
-	/* vipc */
-	res = vipcc_stop(ctx->vipcc);
-	if (res < 0)
-		ULOG_ERRNO("vipcc_stop", -res);
 
 	return res;
 }
@@ -321,6 +291,7 @@ static void status_cb(struct vipcc_ctx *ctx,
 		      const struct vipc_status *st,
 		      void *userdata)
 {
+	int res = 0;
 	struct context *ud = (struct context *)userdata;
 
 	for (unsigned int i = 0; i < st->num_planes; i++) {
@@ -335,9 +306,9 @@ static void status_cb(struct vipcc_ctx *ctx,
 	ud->frame_dim.width = st->width;
 	ud->frame_dim.height = st->height;
 
-	/* Start running */
-	context_start(ud);
-
+	res = vipcc_start(ctx);
+	if (res < 0)
+		ULOG_ERRNO("vipcc_start", -res);
 }
 
 static void frame_cb(struct vipcc_ctx *ctx,
@@ -351,10 +322,6 @@ static void frame_cb(struct vipcc_ctx *ctx,
 	struct timespec timestamp;
 
 	ULOGD("received frame %08x", frame->index);
-
-	/* Early exit if not asked to process frames */
-	if (!ud->msg_cmd_handler.getProcess())
-		goto out;
 
 	/* Sanity checks */
 	if (frame->width != ud->frame_dim.width) {
@@ -419,7 +386,7 @@ eos_cb(struct vipcc_ctx *ctx, enum vipc_eos_reason reason, void *userdata)
 	ULOGI("eos received: %s (%u)", vipc_eos_reason_to_str(reason), reason);
 }
 
-static struct vipcc_cb client_cbs = {.status_cb = status_cb,
+static const struct vipcc_cb s_vipc_client_cbs = {.status_cb = status_cb,
 				     .configure_cb = NULL,
 				     .frame_cb = frame_cb,
 				     .connection_status_cb = conn_status_cb,
@@ -428,7 +395,6 @@ static struct vipcc_cb client_cbs = {.status_cb = status_cb,
 static int context_init(struct context *ctx)
 {
 	int res = 0;
-	struct vipcc_cfg_info vipc_info;
 
 	/* Create telemetry consumer */
 	ctx->consumer = tlm_consumer_new();
@@ -469,28 +435,6 @@ static int context_init(struct context *ctx)
 		goto error;
 	}
 
-	/* Get vipc cfg info */
-	res = vipcc_cfg_get_info(VIPC_DEPTH_MAP_STREAM, &vipc_info);
-	if (res < 0) {
-		ULOG_ERRNO("vipcc_cfg_get_info('%s')", -res,
-			VIPC_DEPTH_MAP_STREAM);
-		goto error;
-	} else {
-		/* Create vipc client */
-		ctx->vipcc = vipcc_new(s_ctx.loop.get(),
-				&client_cbs,
-				vipc_info.be_cbs,
-				vipc_info.address,
-				ctx,
-				5,
-				true);
-		if (ctx->vipcc == NULL) {
-			ULOG_ERRNO("vipcc_new", -res);
-			goto error;
-		}
-	}
-	vipcc_cfg_release_info(&vipc_info);
-
 	/* Create message hub */
 	ctx->msg = new msghub::MessageHub(&s_ctx.loop, nullptr);
 	if (ctx->msg == nullptr) {
@@ -528,6 +472,63 @@ error:
 }
 
 
+void HelloServiceCommandHandler::processingStart(
+	const ::google::protobuf::Empty &args)
+{
+	int res = 0;
+	struct vipcc_cfg_info vipc_info;
+	memset(&vipc_info, 0, sizeof(vipc_info));
+
+	/* Make sure not already in progress */
+	ULOG_ERRNO_RETURN_IF(mCtx->vipcc != NULL, EBUSY);
+
+	/* Get vipc cfg info */
+	res = vipcc_cfg_get_info(VIPC_DEPTH_MAP_STREAM, &vipc_info);
+	if (res < 0) {
+		ULOG_ERRNO("vipcc_cfg_get_info('%s')", -res,
+			VIPC_DEPTH_MAP_STREAM);
+		goto error;
+	} else {
+		/* Create vipc client */
+		mCtx->vipcc = vipcc_new(mCtx->loop.get(),
+				&s_vipc_client_cbs,
+				vipc_info.be_cbs,
+				vipc_info.address,
+				mCtx,
+				5,
+				true);
+		if (mCtx->vipcc == NULL) {
+			ULOG_ERRNO("vipcc_new", -res);
+			goto error;
+		}
+	}
+	vipcc_cfg_release_info(&vipc_info);
+
+	/* Background thread processing */
+	res = processing_start(mCtx->processing);
+	if (res < 0) {
+		ULOG_ERRNO("processing_start", -res);
+		goto error;
+	}
+
+error:
+	/* TODO */
+	;
+}
+
+void HelloServiceCommandHandler::processingStop(
+	const ::google::protobuf::Empty &args)
+{
+	/* Background thread processing */
+	processing_stop(mCtx->processing);
+
+	if (mCtx->vipcc != NULL) {
+		vipcc_stop(mCtx->vipcc);
+		vipcc_destroy(mCtx->vipcc);
+		mCtx->vipcc = NULL;
+	}
+}
+
 static void sighandler(int signum)
 {
 	/* Set stopped flag and wakeup loop */
@@ -549,6 +550,8 @@ int main(int argc, char *argv[])
 	signal(SIGINT, &sighandler);
 	signal(SIGTERM, &sighandler);
 	signal(SIGPIPE, SIG_IGN);
+
+	context_start(&s_ctx);
 
 	/* Run loop until stop is requested */
 	while (!stop)

@@ -97,7 +97,7 @@ class Mission(AbstractMission):
         # Commands #
         ############
         # Start Computer Vision service processing
-        self.cv_service_msgs.cmd.sender.set_process(True)
+        self.cv_service_msgs.cmd.sender.processing_start()
 
     def _on_channel_connected(self, channel):
         if channel == self.env.airsdk_channel:
@@ -126,7 +126,7 @@ class Mission(AbstractMission):
         # Commands #
         ############
         # Stop Computer Vision service processing
-        self.cv_service_msgs.cmd.sender.set_process(False)
+        self.cv_service_msgs.cmd.sender.processing_stop()
 
         ####################################
         # Messages / communication cleanup #

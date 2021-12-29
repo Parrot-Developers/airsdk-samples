@@ -7,7 +7,8 @@ package samples.hello.cv_service.messages;
 // Union of all possible commands of this package.
 message Command {
     oneof id {
-        bool set_process = 1;
+        google.protobuf.Empty processing_start = 1;
+        google.protobuf.Empty processing_stop = 2;
     }
 }
 
