@@ -2,7 +2,6 @@
  * Copyright (C) 2020 Parrot Drones SAS
  */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,14 +25,14 @@ ULOG_DECLARE_TAG(ULOG_TAG);
 
 #include "processing.h"
 
-#define VIPC_DEPTH_MAP_STREAM	"fstcam_stereo_depth_filtered"
-#define TLM_SECTION_USER	"drone_controller"
-#define TLM_SECTION_OUT		"cv@hello"
-#define TLM_SECTION_OUT_RATE	1000
-#define TLM_SECTION_OUT_COUNT	10
-#define MSGHUB_ADDR		"unix:/tmp/hello-cv-service"
-#define CLOSE_DEPTH		0.8f /* [m] */
-#define FAR_DEPTH		1.2f /* [m] */
+#define VIPC_DEPTH_MAP_STREAM "fstcam_stereo_depth_filtered"
+#define TLM_SECTION_USER "drone_controller"
+#define TLM_SECTION_OUT "cv@hello"
+#define TLM_SECTION_OUT_RATE 1000
+#define TLM_SECTION_OUT_COUNT 10
+#define MSGHUB_ADDR "unix:/tmp/hello-cv-service"
+#define CLOSE_DEPTH 0.8f /* [m] */
+#define FAR_DEPTH 1.2f   /* [m] */
 
 struct tlm_data_in {
 	struct {
@@ -63,15 +62,16 @@ struct tlm_data_out {
 	} algo;
 };
 
-class HelloServiceCommandHandler
-	: public ::samples::hello::cv_service::messages::msghub::
-		  CommandHandler {
+class HelloServiceCommandHandler : public ::samples::hello::cv_service::
+					   messages::msghub::CommandHandler {
 public:
 	inline HelloServiceCommandHandler(struct context *ctx) : mCtx(ctx) {}
 
-	virtual void processingStart(const ::google::protobuf::Empty &args) override;
+	virtual void processingStart(
+		const ::google::protobuf::Empty &args) override;
 
-	virtual void processingStop(const ::google::protobuf::Empty &args) override;
+	virtual void processingStop(
+		const ::google::protobuf::Empty &args) override;
 
 private:
 	struct context *mCtx;
@@ -129,6 +129,7 @@ struct context {
 	inline context() : msg_cmd_handler(this) {}
 };
 
+// clang-format off
 static const struct tlm_reg_field s_tlm_data_in_fields[] = {
 	TLM_REG_FIELD_SCALAR_EX(struct tlm_data_in, velocity.x,
 			"linear_velocity_global.x", TLM_TYPE_FLOAT32),
@@ -153,14 +154,18 @@ static const struct tlm_reg_field s_tlm_data_in_fields[] = {
 };
 
 static const struct tlm_reg_field s_tlm_data_out_fields[] = {
-	TLM_REG_FIELD_SCALAR(struct tlm_data_out, algo.x, TLM_TYPE_FLOAT32),
-	TLM_REG_FIELD_SCALAR(struct tlm_data_out, algo.y, TLM_TYPE_FLOAT32),
-	TLM_REG_FIELD_SCALAR(struct tlm_data_out, algo.z, TLM_TYPE_FLOAT32),
+	TLM_REG_FIELD_SCALAR(struct tlm_data_out, algo.x,
+			TLM_TYPE_FLOAT32),
+	TLM_REG_FIELD_SCALAR(struct tlm_data_out, algo.y,
+			TLM_TYPE_FLOAT32),
+	TLM_REG_FIELD_SCALAR(struct tlm_data_out, algo.z,
+			TLM_TYPE_FLOAT32),
 	TLM_REG_FIELD_SCALAR(struct tlm_data_out, algo.depth_mean,
 			TLM_TYPE_FLOAT32),
 	TLM_REG_FIELD_SCALAR(struct tlm_data_out, algo.confidence,
 			TLM_TYPE_FLOAT32),
 };
+// clang-format on
 
 static const struct tlm_reg_struct s_tlm_data_in_struct =
 	TLM_REG_STRUCT("tlm_data_in", s_tlm_data_in_fields);
@@ -213,8 +218,8 @@ static void context_clean(struct context *ctx)
 static int context_start(struct context *ctx)
 {
 	/* msg */
-	ctx->msg_channel = ctx->msg->startServerChannel(
-		pomp::Address(MSGHUB_ADDR), 0666);
+	ctx->msg_channel =
+		ctx->msg->startServerChannel(pomp::Address(MSGHUB_ADDR), 0666);
 	if (ctx->msg_channel == nullptr) {
 		ULOGE("Failed to start server channel on '%s'", MSGHUB_ADDR);
 		return -EPERM;
@@ -271,15 +276,13 @@ static void processing_evt_cb(struct pomp_evt *evt, void *userdata)
 
 	/* Send event message if required */
 	if (output.depth_mean <= CLOSE_DEPTH
-			&& ud->previous_depth_mean > CLOSE_DEPTH
-			&& !ud->is_close) {
+	    && ud->previous_depth_mean > CLOSE_DEPTH && !ud->is_close) {
 		const ::google::protobuf::Empty message;
 		ud->msg_evt_sender.close(message);
 		ud->is_close = true;
 	}
 	if (output.depth_mean >= FAR_DEPTH
-			&& ud->previous_depth_mean < FAR_DEPTH
-			&& ud->is_close) {
+	    && ud->previous_depth_mean < FAR_DEPTH && ud->is_close) {
 		const ::google::protobuf::Empty message;
 		ud->msg_evt_sender.far(message);
 		ud->is_close = false;
@@ -296,11 +299,11 @@ static void status_cb(struct vipcc_ctx *ctx,
 
 	for (unsigned int i = 0; i < st->num_planes; i++) {
 		ULOGI("method %s, plane %d, w %d, h %d, stride %d",
-			st->method,
-			i,
-			st->width,
-			st->height,
-			st->planes[i].stride);
+		      st->method,
+		      i,
+		      st->width,
+		      st->height,
+		      st->planes[i].stride);
 	}
 
 	ud->frame_dim.width = st->width;
@@ -326,12 +329,14 @@ static void frame_cb(struct vipcc_ctx *ctx,
 	/* Sanity checks */
 	if (frame->width != ud->frame_dim.width) {
 		ULOGE("frame width (%d) different than status width (%d)",
-			frame->width, ud->frame_dim.width);
+		      frame->width,
+		      ud->frame_dim.width);
 		goto out;
 	}
 	if (frame->height != ud->frame_dim.height) {
 		ULOGE("frame height (%d) different than status height (%d)",
-			frame->height, ud->frame_dim.height);
+		      frame->height,
+		      ud->frame_dim.height);
 		goto out;
 	}
 	if (frame->num_planes != 1) {
@@ -374,23 +379,26 @@ out:
 		vipcc_release(ctx, frame);
 }
 
-static void
-conn_status_cb(struct vipcc_ctx *ctx, bool connected, void *userdata)
+static void conn_status_cb(struct vipcc_ctx *ctx,
+			   bool connected,
+			   void *userdata)
 {
 	ULOGI("connected: %d", connected);
 }
 
-static void
-eos_cb(struct vipcc_ctx *ctx, enum vipc_eos_reason reason, void *userdata)
+static void eos_cb(struct vipcc_ctx *ctx,
+		   enum vipc_eos_reason reason,
+		   void *userdata)
 {
 	ULOGI("eos received: %s (%u)", vipc_eos_reason_to_str(reason), reason);
 }
 
 static const struct vipcc_cb s_vipc_client_cbs = {.status_cb = status_cb,
-				     .configure_cb = NULL,
-				     .frame_cb = frame_cb,
-				     .connection_status_cb = conn_status_cb,
-				     .eos_cb = eos_cb};
+						  .configure_cb = NULL,
+						  .frame_cb = frame_cb,
+						  .connection_status_cb =
+							  conn_status_cb,
+						  .eos_cb = eos_cb};
 
 static int context_init(struct context *ctx)
 {
@@ -403,8 +411,10 @@ static int context_init(struct context *ctx)
 		ULOG_ERRNO("tlm_consumer_new", -res);
 		goto error;
 	}
-	res = tlm_consumer_reg_struct_ptr(ctx->consumer, &ctx->tlm_data_in,
-		TLM_SECTION_USER, &s_tlm_data_in_struct);
+	res = tlm_consumer_reg_struct_ptr(ctx->consumer,
+					  &ctx->tlm_data_in,
+					  TLM_SECTION_USER,
+					  &s_tlm_data_in_struct);
 	if (res < 0) {
 		ULOG_ERRNO("tlm_consumer_reg_struct_ptr", -res);
 		goto error;
@@ -416,15 +426,17 @@ static int context_init(struct context *ctx)
 	}
 
 	/* Create telemetry producer */
-	ctx->producer = tlm_producer_new(TLM_SECTION_OUT,
-			TLM_SECTION_OUT_COUNT, TLM_SECTION_OUT_RATE);
+	ctx->producer = tlm_producer_new(
+		TLM_SECTION_OUT, TLM_SECTION_OUT_COUNT, TLM_SECTION_OUT_RATE);
 	if (ctx->producer == NULL) {
 		res = -ENOMEM;
 		ULOG_ERRNO("tlm_producer_new", -res);
 		goto error;
 	}
-	res = tlm_producer_reg_struct_ptr(ctx->producer, &ctx->tlm_data_out,
-		NULL, &s_tlm_data_out_struct);
+	res = tlm_producer_reg_struct_ptr(ctx->producer,
+					  &ctx->tlm_data_out,
+					  NULL,
+					  &s_tlm_data_out_struct);
 	if (res < 0) {
 		ULOG_ERRNO("tlm_producer_reg_struct_ptr", -res);
 		goto error;
@@ -450,8 +462,8 @@ static int context_init(struct context *ctx)
 		ULOG_ERRNO("pomp_evt_new", -res);
 		goto error;
 	}
-	res = pomp_evt_attach_to_loop(ctx->processing_evt, ctx->loop.get(),
-			&processing_evt_cb, ctx);
+	res = pomp_evt_attach_to_loop(
+		ctx->processing_evt, ctx->loop.get(), &processing_evt_cb, ctx);
 	if (res < 0) {
 		ULOG_ERRNO("pomp_evt_attach_to_loop", -res);
 		goto error;
@@ -471,7 +483,6 @@ error:
 	return res;
 }
 
-
 void HelloServiceCommandHandler::processingStart(
 	const ::google::protobuf::Empty &args)
 {
@@ -485,18 +496,19 @@ void HelloServiceCommandHandler::processingStart(
 	/* Get vipc cfg info */
 	res = vipcc_cfg_get_info(VIPC_DEPTH_MAP_STREAM, &vipc_info);
 	if (res < 0) {
-		ULOG_ERRNO("vipcc_cfg_get_info('%s')", -res,
-			VIPC_DEPTH_MAP_STREAM);
+		ULOG_ERRNO("vipcc_cfg_get_info('%s')",
+			   -res,
+			   VIPC_DEPTH_MAP_STREAM);
 		goto error;
 	} else {
 		/* Create vipc client */
 		mCtx->vipcc = vipcc_new(mCtx->loop.get(),
-				&s_vipc_client_cbs,
-				vipc_info.be_cbs,
-				vipc_info.address,
-				mCtx,
-				5,
-				true);
+					&s_vipc_client_cbs,
+					vipc_info.be_cbs,
+					vipc_info.address,
+					mCtx,
+					5,
+					true);
 		if (mCtx->vipcc == NULL) {
 			ULOG_ERRNO("vipcc_new", -res);
 			goto error;

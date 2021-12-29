@@ -62,7 +62,7 @@ void processing_stop(struct processing *self);
  * processing object, otherwise the caller still owns it ans shall release it.
  */
 int processing_step(struct processing *self,
-		const struct processing_input *input);
+		    const struct processing_input *input);
 
 /**
  * Get output of processing step. Shall be called by the main loop when the
@@ -71,4 +71,4 @@ int processing_step(struct processing *self,
  * @return 0 in case of success, negative errno in case of error.
  */
 int processing_get_output(struct processing *self,
-		struct processing_output *output);
+			  struct processing_output *output);

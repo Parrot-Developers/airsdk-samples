@@ -36,29 +36,25 @@ struct processing {
 };
 
 static void do_step(struct processing *self,
-		const struct processing_input *input,
-		struct processing_output *output)
+		    const struct processing_input *input,
+		    struct processing_output *output)
 {
 	int i, j;
 	float depth_mean;
 
-	cv::Mat depth_frame(
-			input->frame->height,
-			input->frame->width,
-			CV_32F,
-			(void *)input->frame->planes[0].virt_addr,
-			input->frame->planes[0].stride);
+	cv::Mat depth_frame(input->frame->height,
+			    input->frame->width,
+			    CV_32F,
+			    (void *)input->frame->planes[0].virt_addr,
+			    input->frame->planes[0].stride);
 
 	cv::Mat mask_frame(
-			input->frame->height,
-			input->frame->width,
-			CV_8UC1,
-			1);
+		input->frame->height, input->frame->width, CV_8UC1, 1);
 
 	for (i = 0; i < depth_frame.rows; ++i) {
 		for (j = 0; j < depth_frame.cols; ++j) {
-			if (depth_frame.at<float>(i, j) < 0.f ||
-				depth_frame.at<float>(i, j) == INFINITY)
+			if (depth_frame.at<float>(i, j) < 0.f
+			    || depth_frame.at<float>(i, j) == INFINITY)
 				mask_frame.at<uint8_t>(i, j) = 0;
 		}
 	}
@@ -205,7 +201,7 @@ void processing_stop(struct processing *self)
 }
 
 int processing_step(struct processing *self,
-	const struct processing_input *input)
+		    const struct processing_input *input)
 {
 	int res = 0;
 	ULOG_ERRNO_RETURN_ERR_IF(self == NULL, EINVAL);
@@ -242,7 +238,7 @@ int processing_step(struct processing *self,
 }
 
 int processing_get_output(struct processing *self,
-		struct processing_output *output)
+			  struct processing_output *output)
 {
 	int res = 0;
 	ULOG_ERRNO_RETURN_ERR_IF(self == NULL, EINVAL);
