@@ -1,9 +1,17 @@
 from fsup.utils import msg_id
 from fsup.genmission import AbstractMission
-from fsup.missions.default.takeoff.stage import TAKEOFF_STAGE as DEF_TAKEOFF_STAGE
-from fsup.missions.default.hovering.stage import HOVERING_STAGE as DEF_HOVERING_STAGE
-from fsup.missions.default.landing.stage import LANDING_STAGE as DEF_LANDING_STAGE
-from fsup.missions.default.critical.stage import CRITICAL_STAGE as DEF_CRITICAL_STAGE
+from fsup.missions.default.takeoff.stage import (
+    TAKEOFF_STAGE as DEF_TAKEOFF_STAGE,
+)
+from fsup.missions.default.hovering.stage import (
+    HOVERING_STAGE as DEF_HOVERING_STAGE,
+)
+from fsup.missions.default.landing.stage import (
+    LANDING_STAGE as DEF_LANDING_STAGE,
+)
+from fsup.missions.default.critical.stage import (
+    CRITICAL_STAGE as DEF_CRITICAL_STAGE,
+)
 from fsup.missions.default.mission import TRANSITIONS as DEF_TRANSITIONS
 
 # messages exchanged with mission UI
@@ -24,8 +32,9 @@ import colibrylite.motion_state_pb2 as cbry_motion_state
 
 UID = "com.parrot.missions.samples.hello"
 
-from .ground.stage import GROUND_STAGE
-from .flying.stage import FLYING_STAGE
+from .ground.stage import GROUND_STAGE  # noqa: E402
+from .flying.stage import FLYING_STAGE  # noqa: E402
+
 
 class Mission(AbstractMission):
     def __init__(self, env):
@@ -65,33 +74,45 @@ class Mission(AbstractMission):
 
         # Attach Guidance ground mode messages
         self.gdnc_grd_mode_msgs = self.mc.attach_client_service_pair(
-            self.mc.gdnc_channel, hello_gdnc_mode_messages, True)
+            self.mc.gdnc_channel, hello_gdnc_mode_messages, True
+        )
 
         # Create Computer Vision service channel
         self.cv_service_msgs_channel = self.mc.start_client_channel(
-            'unix:/tmp/hello-cv-service')
+            "unix:/tmp/hello-cv-service"
+        )
 
         # Attach Computer Vision service messages
         self.cv_service_msgs = self.mc.attach_client_service_pair(
-            self.cv_service_msgs_channel, hello_cv_service_messages, True)
+            self.cv_service_msgs_channel, hello_cv_service_messages, True
+        )
 
         # For forwarding, observe messages using an observer
-        self.observer = self.mc.observe({
-            events.Channel.CONNECTED:
-            lambda _, channel: self._on_channel_connected(channel),
-            msg_id(hello_cv_service_messages.Event, 'close'):
-            lambda *args: self._send_to_ui_stereo_camera_close_state(True),
-            msg_id(hello_cv_service_messages.Event, 'far'):
-            lambda *args: self._send_to_ui_stereo_camera_close_state(False),
-            msg_id(dctl_messages.Event, 'motion_state_changed'):
-            lambda _, msg: self._send_to_ui_drone_motion_state(
-                msg.motion_state_changed == cbry_motion_state.MOVING),
-        })
+        self.observer = self.mc.observe(
+            {
+                events.Channel.CONNECTED: lambda _, c: self._on_connected(c),
+                msg_id(
+                    hello_cv_service_messages.Event, "close"
+                ): lambda *args: self._send_to_ui_stereo_camera_close_state(
+                    True
+                ),
+                msg_id(
+                    hello_cv_service_messages.Event, "far"
+                ): lambda *args: self._send_to_ui_stereo_camera_close_state(
+                    False
+                ),
+                msg_id(
+                    dctl_messages.Event, "motion_state_changed"
+                ): lambda _, msg: self._send_to_ui_drone_motion_state(
+                    msg.motion_state_changed == cbry_motion_state.MOVING
+                ),
+            }
+        )
 
         # For debugging, also observe UI messages manually using an observer
-        self.dbg_observer = self.ext_ui_msgs.cmd.observe({
-            events.Service.MESSAGE: self._on_ui_msg_cmd
-        })
+        self.dbg_observer = self.ext_ui_msgs.cmd.observe(
+            {events.Service.MESSAGE: self._on_ui_msg_cmd}
+        )
 
         ############
         # Commands #
@@ -99,7 +120,7 @@ class Mission(AbstractMission):
         # Start Computer Vision service processing
         self.cv_service_msgs.cmd.sender.processing_start()
 
-    def _on_channel_connected(self, channel):
+    def _on_connected(self, channel):
         if channel == self.env.airsdk_channel:
             self.log.info("connected to airsdk channel")
         elif channel == self.cv_service_msgs_channel:
@@ -174,8 +195,16 @@ class Mission(AbstractMission):
         TRANSITIONS = [
             # "say/hold" messages from the mission UI alternate between "say"
             # and "idle" states in the ground stage.
-            [msg_id(hello_messages.Command, 'say'), 'ground.idle', 'ground.say'],
-            [msg_id(hello_messages.Command, 'hold'), 'ground.say', 'ground.idle'],
+            [
+                msg_id(hello_messages.Command, "say"),
+                "ground.idle",
+                "ground.say",
+            ],
+            [
+                msg_id(hello_messages.Command, "hold"),
+                "ground.say",
+                "ground.idle",
+            ],
         ]
 
         return TRANSITIONS + DEF_TRANSITIONS

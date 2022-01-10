@@ -22,6 +22,10 @@ LOCAL_MODULE := airsdk-hello-autopilot-plugins
 LOCAL_DESCRIPTION := AirSdk autopilot hello mission files
 LOCAL_CATEGORY_PATH := airsdk/missions/samples/hello
 
+LOCAL_SRC_FILES := $(call all-files-under,autopilot-plugins/fsup,.py)
+LOCAL_SRC_FILES += $(call all-files-under,autopilot-plugins/guidance/python,.py)
+LOCAL_CODECHECK_PYTHON := flake8
+
 $(call copy-all-under,autopilot-plugins/fsup,.py,$(airsdk-hello.fsup-dir))
 $(call copy-all-under,autopilot-plugins/guidance/python,.py,$(airsdk-hello.guidance-dir))
 
