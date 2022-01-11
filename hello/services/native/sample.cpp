@@ -126,7 +126,7 @@ struct context {
 	/* Close state */
 	bool is_close;
 
-	inline context() : msg_cmd_handler(this) {}
+	inline context() : msg_cmd_handler(this), is_close(false) {}
 };
 
 // clang-format off
