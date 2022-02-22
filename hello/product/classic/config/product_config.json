@@ -8,6 +8,7 @@
 		}
 	},
 	"signature": {
+		"key": "",
 		"classic": {
 			"images": [
 				{ "in": "com.parrot.missions.samples.hello.tar.gz" }

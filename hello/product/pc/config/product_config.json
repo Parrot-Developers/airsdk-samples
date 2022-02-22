@@ -6,5 +6,8 @@
 				"sdk_ids" : ["091a"]
 			}
 		}
+	},
+	"signature": {
+		"key": "ecdsa:local:pc/key.pem"
 	}
 }
