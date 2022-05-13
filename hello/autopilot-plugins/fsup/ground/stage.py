@@ -3,7 +3,7 @@ from fsup.genstate import State, guidance_modes
 import colibrylite.estimation_mode_pb2 as cbry_est
 
 from fsup.missions.default.ground.stage import GROUND_STAGE as DEF_GROUND_STAGE
-import samples.hello.guidance.messages_pb2 as hello_gdnc_mode_messages
+import samples.hello.guidance.messages_pb2 as hello_gdnc_mode_msgs
 
 from ..mission import UID
 
@@ -17,7 +17,7 @@ class Idle(State):
     def enter(self, msg):
         self.mc.dctl.cmd.sender.set_estimation_mode(cbry_est.MOTORS_STOPPED)
         self.set_guidance_mode(
-            _GROUND_MODE_NAME, hello_gdnc_mode_messages.Config(say=False)
+            _GROUND_MODE_NAME, hello_gdnc_mode_msgs.Config(say=False)
         )
 
 
@@ -26,7 +26,7 @@ class Say(State):
     def enter(self, msg):
         self.mc.dctl.cmd.sender.set_estimation_mode(cbry_est.MOTORS_STOPPED)
         self.set_guidance_mode(
-            _GROUND_MODE_NAME, hello_gdnc_mode_messages.Config(say=True)
+            _GROUND_MODE_NAME, hello_gdnc_mode_msgs.Config(say=True)
         )
 
     # State machine will call the state step method with the guidance ground
@@ -34,7 +34,7 @@ class Say(State):
     def step(self, msg):
         # It is required to check the kind of message received as multiple
         # messages can trigger the step method.
-        if is_msg(msg, hello_gdnc_mode_messages.Event, "count"):
+        if is_msg(msg, hello_gdnc_mode_msgs.Event, "count"):
             self.log.info("ground mode count event: msg=%s", msg)
             self.mission.ext_ui_msgs.evt.sender.count(msg.count)
 

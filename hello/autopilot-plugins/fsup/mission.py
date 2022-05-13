@@ -15,19 +15,19 @@ from fsup.missions.default.critical.stage import (
 from fsup.missions.default.mission import TRANSITIONS as DEF_TRANSITIONS
 
 # messages exchanged with mission UI
-import parrot.missions.samples.hello.airsdk.messages_pb2 as hello_messages
+import parrot.missions.samples.hello.airsdk.messages_pb2 as hello_msgs
 
 # messages exchanged with the guidance ground mode
-import samples.hello.guidance.messages_pb2 as hello_gdnc_mode_messages
+import samples.hello.guidance.messages_pb2 as hello_gdnc_mode_msgs
 
 # messages exchanged with the cv service
-import samples.hello.cv_service.messages_pb2 as hello_cv_service_messages
+import samples.hello.cv_service.messages_pb2 as hello_cv_service_msgs
 
 # events that are not expressed as protobuf messages
 import fsup.services.events as events
 
 # messages exchanged with the drone controller
-import drone_controller.drone_controller_pb2 as dctl_messages
+import drone_controller.drone_controller_pb2 as dctl_msgs
 import colibrylite.motion_state_pb2 as cbry_motion_state
 
 UID = "com.parrot.missions.samples.hello"
@@ -52,7 +52,7 @@ class Mission(AbstractMission):
         ##################################
         # The airsdk service assumes that the mission is a server: as such it
         # sends events and receive commands.
-        self.ext_ui_msgs = self.env.make_airsdk_service_pair(hello_messages)
+        self.ext_ui_msgs = self.env.make_airsdk_service_pair(hello_msgs)
 
     def on_unload(self):
         ####################################
@@ -74,7 +74,7 @@ class Mission(AbstractMission):
 
         # Attach Guidance ground mode messages
         self.gdnc_grd_mode_msgs = self.mc.attach_client_service_pair(
-            self.mc.gdnc_channel, hello_gdnc_mode_messages, True
+            self.mc.gdnc_channel, hello_gdnc_mode_msgs, True
         )
 
         # Create Computer Vision service channel
@@ -84,7 +84,7 @@ class Mission(AbstractMission):
 
         # Attach Computer Vision service messages
         self.cv_service_msgs = self.mc.attach_client_service_pair(
-            self.cv_service_msgs_channel, hello_cv_service_messages, True
+            self.cv_service_msgs_channel, hello_cv_service_msgs, True
         )
 
         # For forwarding, observe messages using an observer
@@ -92,17 +92,17 @@ class Mission(AbstractMission):
             {
                 events.Channel.CONNECTED: lambda _, c: self._on_connected(c),
                 msg_id(
-                    hello_cv_service_messages.Event, "close"
+                    hello_cv_service_msgs.Event, "close"
                 ): lambda *args: self._send_to_ui_stereo_camera_close_state(
                     True
                 ),
                 msg_id(
-                    hello_cv_service_messages.Event, "far"
+                    hello_cv_service_msgs.Event, "far"
                 ): lambda *args: self._send_to_ui_stereo_camera_close_state(
                     False
                 ),
                 msg_id(
-                    dctl_messages.Event, "motion_state_changed"
+                    dctl_msgs.Event, "motion_state_changed"
                 ): lambda _, msg: self._send_to_ui_drone_motion_state(
                     msg.motion_state_changed == cbry_motion_state.MOVING
                 ),
@@ -196,12 +196,12 @@ class Mission(AbstractMission):
             # "say/hold" messages from the mission UI alternate between "say"
             # and "idle" states in the ground stage.
             [
-                msg_id(hello_messages.Command, "say"),
+                msg_id(hello_msgs.Command, "say"),
                 "ground.idle",
                 "ground.say",
             ],
             [
-                msg_id(hello_messages.Command, "hold"),
+                msg_id(hello_msgs.Command, "hold"),
                 "ground.say",
                 "ground.idle",
             ],
