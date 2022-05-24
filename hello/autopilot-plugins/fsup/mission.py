@@ -1,4 +1,4 @@
-from fsup.utils import msg_id
+from msghub_utils import msg_id
 from fsup.genmission import AbstractMission
 from fsup.missions.default.takeoff.stage import (
     TAKEOFF_STAGE as DEF_TAKEOFF_STAGE,
