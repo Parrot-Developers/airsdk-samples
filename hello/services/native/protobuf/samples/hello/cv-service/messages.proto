@@ -17,5 +17,6 @@ message Event {
     oneof id {
         google.protobuf.Empty close = 1;
         google.protobuf.Empty far = 2;
+        float depth_mean = 3;
     }
 }

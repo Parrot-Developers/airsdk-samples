@@ -123,6 +123,9 @@ struct context {
 	/* Previous depth mean value */
 	float previous_depth_mean;
 
+	/* next timestamp at which depth mean value should be sent */
+	struct timespec next_depth_mean_timestamp;
+
 	/* Close state */
 	bool is_close;
 
@@ -249,6 +252,14 @@ static int context_stop(struct context *ctx)
 	return res;
 }
 
+/* true if t1 is greater or equal to t2 */
+static bool timestamp_after(const struct timespec &t1,
+			    const struct timespec &t2)
+{
+	return ((t1.tv_sec == t2.tv_sec) && t1.tv_nsec >= t2.tv_nsec)
+	       || (t1.tv_sec > t2.tv_sec);
+}
+
 static void processing_evt_cb(struct pomp_evt *evt, void *userdata)
 {
 	int res = 0;
@@ -273,6 +284,15 @@ static void processing_evt_cb(struct pomp_evt *evt, void *userdata)
 	res = tlm_producer_put_sample(ud->producer, &output.ts);
 	if (res < 0)
 		ULOG_ERRNO("tlm_producer_put_sample", -res);
+
+	if (timestamp_after(output.ts, ud->next_depth_mean_timestamp)) {
+		/* telemetry timestamp reached time at which it is needed
+		 * to send the message */
+		ud->next_depth_mean_timestamp = output.ts;
+		ud->next_depth_mean_timestamp.tv_sec += 1;
+		ULOGD("sending depth_mean=%f", output.depth_mean);
+		ud->msg_evt_sender.depthMean(output.depth_mean);
+	}
 
 	/* Send event message if required */
 	if (output.depth_mean <= CLOSE_DEPTH
