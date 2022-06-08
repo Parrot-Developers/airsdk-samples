@@ -20,6 +20,12 @@ ULOG_DECLARE_TAG(ULOG_TAG);
 
 #include "processing.h"
 
+// HIST_RANGE_LOW < HIST_RANGE_HIGH
+#define HIST_RANGE_LOW 0.f                            // [m]
+#define HIST_RANGE_HIGH 15.f                          // [m]
+#define HIST_RANGE (HIST_RANGE_HIGH - HIST_RANGE_LOW) // [m]
+#define HIST_SIZE 10
+
 struct processing {
 	struct pomp_evt *evt;
 	bool started;
@@ -39,27 +45,60 @@ static void do_step(struct processing *self,
 		    const struct processing_input *input,
 		    struct processing_output *output)
 {
-	int i, j;
-	float depth_mean;
-
-	cv::Mat depth_frame(input->frame->height,
-			    input->frame->width,
-			    CV_32F,
-			    (void *)input->frame->planes[0].virt_addr,
-			    input->frame->planes[0].stride);
-
+	const int hist_size = HIST_SIZE;
+	const float range_tuple[] = {HIST_RANGE_LOW, HIST_RANGE_HIGH};
+	const float *ranges = {range_tuple};
+	const float bin_size = HIST_RANGE / HIST_SIZE;
+	const cv::Mat depth_frame(input->frame->height,
+				  input->frame->width,
+				  CV_32F,
+				  (void *)input->frame->planes[0].virt_addr,
+				  input->frame->planes[0].stride);
 	cv::Mat mask_frame(
 		input->frame->height, input->frame->width, CV_8UC1, 1);
+	cv::Mat hist;
+	int hist_max_index;
+	float depth_mean;
 
-	for (i = 0; i < depth_frame.rows; ++i) {
-		for (j = 0; j < depth_frame.cols; ++j) {
-			if (depth_frame.at<float>(i, j) < 0.f
-			    || depth_frame.at<float>(i, j) == INFINITY)
+	/* Initialize mask: reject negative and infinity depth pixels */
+	for (int i = 0; i < depth_frame.rows; ++i) {
+		for (int j = 0; j < depth_frame.cols; ++j) {
+			float depth = depth_frame.at<float>(i, j);
+			if (depth < 0.f || depth == INFINITY)
 				mask_frame.at<uint8_t>(i, j) = 0;
 		}
 	}
+
+	/* Compute histogram */
+	cv::calcHist(&depth_frame,
+		     1 /* image count */,
+		     nullptr /* channels */,
+		     mask_frame,
+		     hist,
+		     1, /* dimensions */
+		     &hist_size,
+		     &ranges);
+
+	/* Find histogram index with highest count */
+	cv::minMaxIdx(hist, nullptr, nullptr, nullptr, &hist_max_index);
+
+	float low = HIST_RANGE_LOW + hist_max_index * bin_size;
+	float high = low + bin_size;
+
+	/* Reject depth pixels not in the bin with most frequent depth range */
+	for (int i = 0; i < depth_frame.rows; ++i)
+		for (int j = 0; j < depth_frame.cols; ++j) {
+			float depth = depth_frame.at<float>(i, j);
+			if (depth < low || depth > high)
+				mask_frame.at<uint8_t>(i, j) = 0;
+		}
+
+	/* Compute mean of remaining depth pixels */
 	depth_mean = cv::mean(depth_frame, mask_frame).val[0];
 
+	ULOGD("depth_mean: %f", depth_mean);
+
+	/* Fill output */
 	output->x = input->position_global.x;
 	output->y = input->position_global.y;
 	output->z = input->position_global.z;
