@@ -102,6 +102,9 @@ class Mission(AbstractMission):
                     False
                 ),
                 msg_id(
+                    hello_cv_service_msgs.Event, "depth_mean"
+                ): lambda _, msg: self._send_to_ui_depth_mean(msg.depth_mean),
+                msg_id(
                     dctl_msgs.Event, "motion_state_changed"
                 ): lambda _, msg: self._send_to_ui_drone_motion_state(
                     msg.motion_state_changed == cbry_motion_state.MOVING
@@ -131,6 +134,9 @@ class Mission(AbstractMission):
 
     def _send_to_ui_drone_motion_state(self, state):
         self.ext_ui_msgs.evt.sender.drone_moving(state)
+
+    def _send_to_ui_depth_mean(self, depth_mean):
+        self.ext_ui_msgs.evt.sender.depth_mean(depth_mean)
 
     def _on_ui_msg_cmd(self, event, message):
         # It is recommended that log functions are only called with a
