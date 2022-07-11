@@ -1,19 +1,32 @@
 {
-	"publish": {
-		"firmware": {
-			"update": {
-				"image" : "com.parrot.missions.samples.hello.tar.gz",
-				"sdk_ids" : ["091a"]
-			}
-		}
-	},
-	"signature": {
-		"key": "",
-		"classic": {
-			"images": [
-				{ "in": "com.parrot.missions.samples.hello.tar.gz" }
-			],
-			"script": "common/scripts/sign-image-prod.sh"
-		}
-	}
+   "publish" : {
+      "firmware" : {
+         "update" : {
+            "image" : "com.parrot.missions.samples.hello.tar.gz",
+            "sdk_ids" : [
+               "091a"
+            ]
+         }
+      }
+   },
+   "release" : {
+      "additional_files" : [
+         {
+            "dest" : "mission.json",
+            "mandatory" : true,
+            "src" : "${OUT_DIR}/final/missions/com.parrot.missions.samples.hello/mission.json"
+         }
+      ]
+   },
+   "signature" : {
+      "classic" : {
+         "images" : [
+            {
+               "in" : "com.parrot.missions.samples.hello.tar.gz"
+            }
+         ],
+         "script" : "common/scripts/sign-image-prod.sh"
+      },
+      "key" : ""
+   }
 }

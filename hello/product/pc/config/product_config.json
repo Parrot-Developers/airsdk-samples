@@ -1,13 +1,24 @@
 {
-	"publish": {
-		"firmware": {
-			"flashing": {
-				"image" : "com.parrot.missions.samples.hello.tar.gz",
-				"sdk_ids" : ["091a"]
-			}
-		}
-	},
-	"signature": {
-		"key": "ecdsa:local:pc/key.pem"
-	}
+   "publish" : {
+      "firmware" : {
+         "flashing" : {
+            "image" : "com.parrot.missions.samples.hello.tar.gz",
+            "sdk_ids" : [
+               "091a"
+            ]
+         }
+      }
+   },
+   "release" : {
+      "additional_files" : [
+         {
+            "dest" : "mission.json",
+            "mandatory" : true,
+            "src" : "${OUT_DIR}/final/missions/com.parrot.missions.samples.hello/mission.json"
+         }
+      ]
+   },
+   "signature" : {
+      "key" : "ecdsa:local:pc/key.pem"
+   }
 }
