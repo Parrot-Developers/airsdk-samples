@@ -30,10 +30,9 @@ import fsup.services.events as events
 import drone_controller.drone_controller_pb2 as dctl_msgs
 import colibrylite.motion_state_pb2 as cbry_motion_state
 
-UID = "com.parrot.missions.samples.hello"
-
-from .ground.stage import GROUND_STAGE  # noqa: E402
-from .flying.stage import FLYING_STAGE  # noqa: E402
+from .ground.stage import GROUND_STAGE
+from .flying.stage import FLYING_STAGE
+from .uid import UID
 
 
 class Mission(AbstractMission):
