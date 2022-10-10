@@ -24,7 +24,7 @@ import samples.hello.guidance.messages_pb2 as hello_gdnc_mode_msgs
 import samples.hello.cv_service.messages_pb2 as hello_cv_service_msgs
 
 # events that are not expressed as protobuf messages
-import fsup.services.events as events
+import fsup.message_center.events as events
 
 # messages exchanged with the drone controller
 import drone_controller.drone_controller_pb2 as dctl_msgs
