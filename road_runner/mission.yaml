@@ -1,0 +1,48 @@
+api_version: 1
+kind: Mission
+metadata:
+  uid: com.parrot.missions.samples.road_runner
+  name: road_runner
+  description: The drone use the front camera to follow a road.
+  version: "1.0.0"
+  target_model_id: 091A
+  target_min_version: "7.6.0"
+  target_max_version: "7.6.99"
+fsup:
+  lang: "python"
+guidance:
+  road_following:
+    lang: c++
+    depends:
+      - eigen
+      - libconfig
+      - libconfigreader
+      - libfutils
+      - libguidance-plugin
+      - libmsghub
+      - libparrot-physics
+      - libtelemetry
+      - msghub::road_following
+      - protobuf
+  look_down:
+    lang: python
+msghub:
+  - name: cv_road
+    include_path: road_runner/cv_road
+  - name: look_down
+    include_path: road_runner/guidance/look_down
+  - name: road_following
+    include_path: road_runner/guidance/road_following
+services:
+  cv_road:
+    lang: c++
+    depends:
+      - libconfigreader
+      - libfutils
+      - libmsghub
+      - libtelemetry
+      - libvideo-ipc
+      - libvideo-ipc-client-config
+      - msghub::cv_road
+      - opencv4
+      - protobuf

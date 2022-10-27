@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package road_runner.guidance.road_following.messages;
+
+message Event {
+    oneof id {
+        google.protobuf.Empty road_following_enabled = 1;
+        google.protobuf.Empty road_following_disabled = 2;
+        google.protobuf.Empty telemetry_missed_too_long = 3;
+    }
+}

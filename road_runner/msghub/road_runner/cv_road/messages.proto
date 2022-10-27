@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package road_runner.service.cv_road.messages;
+
+message Command {
+    oneof id {
+        bool enable_cv = 1;
+    }
+}
+
+message Event {
+    oneof id {
+        google.protobuf.Empty road_lost = 1;
+    }
+}
