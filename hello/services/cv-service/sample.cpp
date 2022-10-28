@@ -21,7 +21,7 @@ ULOG_DECLARE_TAG(ULOG_TAG);
 #include <video-ipc/vipc_client_cfg.h>
 
 #include <google/protobuf/empty.pb.h>
-#include <samples/hello/cv-service/messages.msghub.h>
+#include <samples/hello/cv_service/messages.msghub.h>
 
 #include "processing.h"
 

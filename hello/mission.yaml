@@ -1,0 +1,35 @@
+api_version: 1
+kind: Mission
+metadata:
+  uid: com.parrot.missions.samples.hello
+  name: hello
+  description: Describe your mission here.
+  version: 0.0.0
+  target_model_id: 091A
+  target_min_version: 0.0.0
+  target_max_version: 99.99.99
+fsup:
+  lang: "python"
+guidance:
+  hello:
+    lang: python
+    depends:
+      - msghub::guidance
+msghub:
+  - name: cv_service
+    include_path: samples/hello/cv_service
+  - name: guidance
+    include_path: samples/hello/guidance
+  - name: mission_ui
+    include_path: parrot
+services:
+  cv-service:
+    lang: c++
+    depends:
+     - msghub::cv_service
+     - libmsghub
+     - protobuf
+     - libtelemetry
+     - libvideo-ipc
+     - libvideo-ipc-client-config
+     - opencv4
