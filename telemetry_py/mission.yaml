@@ -1,0 +1,13 @@
+api_version: 1
+kind: Mission
+metadata:
+  uid: com.parrot.missions.samples.telemetry_py
+  name: telemetry_py
+  description: telemetry python example mission
+  version: "1.0.0"
+  target_model_id: 091A
+  target_min_version: "7.6.0"
+  target_max_version: "7.6.99"
+services:
+  example_telemetry:
+    lang: python
