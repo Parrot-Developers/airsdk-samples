@@ -10,7 +10,7 @@ import guidance.core as gdnc_core
 
 import samples.hello.guidance.messages_pb2 as HelloGroundModeMessages
 
-CONFIG_SUFFIX = "/" + HelloGroundModeMessages.Config.DESCRIPTOR.full_name
+from msghub_utils import service_name
 
 
 class HelloGroundMode(gdnc_core.Mode):
@@ -42,7 +42,7 @@ class HelloGroundMode(gdnc_core.Mode):
             gdnc_core.ChannelKind.GUIDANCE
         )
         self.evt_sender = gdnc_core.MessageSender(
-            HelloGroundModeMessages.Event.DESCRIPTOR.full_name
+            service_name(HelloGroundModeMessages.Event)
         )
 
         self.say = False
@@ -61,11 +61,9 @@ class HelloGroundMode(gdnc_core.Mode):
         return (gdnc_core.Trigger.TIMER, 30, 30)
 
     def configure(self, msg, disable_oa, override_fcam, override_stereo):
-        if not msg.type_url.endswith(CONFIG_SUFFIX):
-            raise ValueError("Ground: unexpected config: %s" % msg.type_url)
-
-        ground_mode_msg = HelloGroundModeMessages.Config()
-        msg.Unpack(ground_mode_msg)
+        ground_mode_msg = gdnc_core.unpack_config(
+            msg, HelloGroundModeMessages.Config
+        )
         self.say = ground_mode_msg.say
 
         self.output.has_front_cam_config = True
