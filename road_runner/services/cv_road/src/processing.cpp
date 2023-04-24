@@ -79,22 +79,6 @@ int SettingReader<struct roadFollowingCfg>::read(const libconfig::Setting &set,
 }
 } // namespace cfgreader
 
-/**
- * Get the path of configuration files.
- *
- * Depending on environment variables, the path may change.
- *
- * @param path path of the config file.the path
- */
-static std::string cfgPath(const std::string &path)
-{
-	const char *prodRoot = std::getenv("MISSION_PRODUCT_ROOT_CFG");
-	if (prodRoot == nullptr)
-		return path;
-	else
-		return std::string(prodRoot) + path;
-}
-
 static void do_step(const struct vipc_frame *frame,
 		    struct roadData *road_data,
 		    bool &is_road_detected)
@@ -292,7 +276,8 @@ Processing::Processing(pomp::Loop *loop) :
 	mDiffTime = {0, 0};
 
 	res = loadRoadFollowingConfiguration(
-		cfgPath(ROAD_FOLLOWING_SERVICE_CONFIG_PATH));
+		cfgreader::ConfigReader::insertMissionRootDir(
+			ROAD_FOLLOWING_SERVICE_CONFIG_PATH));
 	if (res < 0) {
 		ULOG_ERRNO("loadRoadFollowingConfiguration", -res);
 		std::bad_alloc ex;
