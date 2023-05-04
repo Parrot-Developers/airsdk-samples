@@ -1,0 +1,19 @@
+api_version: 1
+kind: Mission
+metadata:
+  uid: com.parrot.missions.samples.move
+  name: move
+  description: Move the drone along a certain trajectory without using a guidance mode.
+  version: "0.0.0"
+  target_model_id: 091A
+  target_min_version: "7.7.0"
+  target_max_version: "7.7.99"
+services:
+  move_along:
+    lang: c++
+    depends:
+      - libairsdk
+      - libarsdk
+      - libarsdkctrl
+      - libarsdkgen
+      - libconfigreader
