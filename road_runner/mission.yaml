@@ -6,8 +6,8 @@ metadata:
   description: The drone use the front camera to follow a road.
   version: "1.0.0"
   target_model_id: 091A
-  target_min_version: "7.6.0"
-  target_max_version: "7.6.99"
+  target_min_version: "7.7.0"
+  target_max_version: "7.7.99"
 fsup:
   lang: "python"
 guidance:
