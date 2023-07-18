@@ -1,15 +1,19 @@
-api_version: 1
+api_version: 3
 kind: Mission
 metadata:
   uid: com.parrot.missions.samples.hello
   name: hello
   description: Describe your mission here.
-  version: 0.0.0
-  target_model_id: 091A
-  target_min_version: 0.0.0
-  target_max_version: 99.99.99
+  version: "0.0.0"
+targets:
+  Anafi Ai:
+  Anafi Ai Simulator:
 fsup:
   lang: "python"
+  depends:
+    - msghub::mission_ui
+    - msghub::guidance
+    - msghub::cv_service
 guidance:
   hello:
     lang: python
@@ -26,10 +30,10 @@ services:
   cv-service:
     lang: c++
     depends:
-     - msghub::cv_service
-     - libmsghub
-     - protobuf
-     - libtelemetry
-     - libvideo-ipc
-     - libvideo-ipc-client-config
-     - opencv4
+      - msghub::cv_service
+      - libmsghub
+      - protobuf
+      - libtelemetry
+      - libvideo-ipc
+      - libvideo-ipc-client-config
+      - opencv4

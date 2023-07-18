@@ -10,11 +10,20 @@ To code your own script, follow the instructions of the documentation.
 (https://developer.parrot.com/docs/olympe/userguide.html)
 
 ### Helping script ###
-If you don't aim to code your own scipt, a working script is furnished.
-Execute it in a python3 shell.
-(See take_off.py)
 
-After Olympe is installed and functional, execute this script in a python3 shell and let the drone takes off and executes the 'move' trajectory
+Install Olympe with this command:
+
+```bash
+$ pip3 install parrot-olympe
+```
+
+and execute the script take_off.py to send a takeoff command to the drone:
+
+```bash
+$ python3 take_off.py
+```
+
+The drone takes off and executes the 'move' trajectory
 
 ### WATCH OUT ###
 This mission aims to move the drone along a pre-defined trajectory. Test the mission on a simulator before any test on a physical drone.

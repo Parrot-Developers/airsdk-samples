@@ -1,0 +1,17 @@
+api_version: 3
+kind: Mission
+metadata:
+  uid: com.parrot.missions.samples.occupancy_grid
+  name: occupancy_grid
+  description: Occupation grid usage example
+  version: "0.0.0"
+targets:
+  Anafi Ai:
+  Anafi Ai Simulator:
+services:
+  spatial_perception:
+    lang: c++
+    depends:
+      - libmoser-igrid-headers
+      - libmoser-ipc
+      - libpomp

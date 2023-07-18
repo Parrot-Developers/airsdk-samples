@@ -1,0 +1,19 @@
+api_version: 3
+kind: Mission
+metadata:
+  uid: com.parrot.missions.samples.tracking
+  name: tracking
+  description: Tracking mission example
+  version: "0.0.0"
+targets:
+  Anafi Ai:
+services:
+  tracking_example:
+    lang: c++
+    depends:
+      - libcv-tracking-service-msghub
+      - libcv-tracking-service-pb
+      - libfutils
+      - libmsghub
+      - libtelemetry
+      - protobuf
