@@ -15,7 +15,7 @@ the `pose` parameter:
 $ sudo apt install parrot-ue4-landscape-ecosystem
 
 # Launch the simulator with the custom 'pose' parameter
-$ sphinx "/opt/parrot-sphinx/usr/share/sphinx/drones/anafi_ai.drone"::pose="1255.41273 -2342.71922 268.21695 0 0 1.5708" & parrot-ue4-landscape-ecosystem
+$ sphinx "/opt/parrot-sphinx/usr/share/sphinx/drones/anafi_ai.drone"::pose="1255.41273 -2342.71922 268.26695 0 0 1.5708" & parrot-ue4-landscape-ecosystem
 ```
 
 The `pose` option places the drone directly on the road. To run the mission

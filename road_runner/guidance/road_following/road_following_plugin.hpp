@@ -34,7 +34,11 @@
 
 #include <cfgreader/cfgreader.hpp>
 #include <futils/timetools.h>
+#ifdef USE_ANAFI2
 #include <guidance.hpp>
+#else
+#include <guidance/local.hpp>
+#endif
 #include <libtelemetry.hpp>
 #include <parrot-physics/coordinates.hpp>
 #include <parrot-physics/drone/angle_ideal_model.hpp>

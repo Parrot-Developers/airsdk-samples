@@ -17,6 +17,7 @@ ULOG_DECLARE_TAG(ULOG_TAG);
 
 #include <libpomp.hpp>
 #include <libtelemetry.h>
+#include <putils/properties.h>
 #include <video-ipc/vipc_client.h>
 #include <video-ipc/vipc_client_cfg.h>
 
@@ -25,7 +26,8 @@ ULOG_DECLARE_TAG(ULOG_TAG);
 
 #include "processing.h"
 
-#define VIPC_DEPTH_MAP_STREAM "fstcam_stereo_depth_filtered"
+#define VIPC_DEPTH_MAP_ANAFI_AI_STREAM "fstcam_stereo_depth_filtered"
+#define VIPC_DEPTH_MAP_ANAFI_UKR_STREAM "hstcam_stereo_depth_filtered"
 #define TLM_SECTION_USER "drone_controller"
 #define TLM_SECTION_OUT "airsdk@cv@hello"
 #define TLM_SECTION_OUT_RATE 1000
@@ -33,6 +35,7 @@ ULOG_DECLARE_TAG(ULOG_TAG);
 #define MSGHUB_ADDR "unix:/tmp/hello-cv-service"
 #define CLOSE_DEPTH 0.8f /* [m] */
 #define FAR_DEPTH 1.2f   /* [m] */
+#define ANAFI_UKR_VARIANTS {"anafi3_mil", "anafi3_milp"}
 
 struct tlm_data_in {
 	struct {
@@ -503,22 +506,55 @@ error:
 	return res;
 }
 
+static int is_anafi3_variant(const char *drone_variant)
+{
+	const char *valid_models[] = ANAFI_UKR_VARIANTS;
+	int valid_models_size = sizeof(valid_models) / sizeof(valid_models[0]);
+
+	for (int i = 0; i < valid_models_size; i++) {
+		if (strcmp(drone_variant, valid_models[i]) == 0)
+			return 1;
+	}
+	return 0;
+}
+
 void HelloServiceCommandHandler::processingStart(
 	const ::google::protobuf::Empty &args)
 {
 	int res = 0;
 	struct vipcc_cfg_info vipc_info;
+	char drone_model[SYS_PROP_VALUE_MAX];
+	std::string vipc_depth_map_stream;
+
 	memset(&vipc_info, 0, sizeof(vipc_info));
 
 	/* Make sure not already in progress */
 	ULOG_ERRNO_RETURN_IF(mCtx->vipcc != NULL, EBUSY);
 
+	res = sys_prop_get("ro.model", drone_model, "None");
+	if (res < 0) {
+		ULOG_ERRNO("sys_prop_get", -res);
+		goto error;
+	} else if (strcmp(drone_model, "None") == 0) {
+		ULOGE("ro.model doesn't exist");
+		goto error;
+	}
+
 	/* Get vipc cfg info */
-	res = vipcc_cfg_get_info(VIPC_DEPTH_MAP_STREAM, &vipc_info);
+	if (is_anafi3_variant(drone_model)) {
+		vipc_depth_map_stream = VIPC_DEPTH_MAP_ANAFI_UKR_STREAM;
+	} else if (strcmp(drone_model, "anafi2") == 0) {
+		vipc_depth_map_stream = VIPC_DEPTH_MAP_ANAFI_AI_STREAM;
+	} else {
+		ULOGE("the drone model doesn't exist: %s", drone_model);
+		goto error;
+	}
+
+	res = vipcc_cfg_get_info(vipc_depth_map_stream.c_str(), &vipc_info);
 	if (res < 0) {
 		ULOG_ERRNO("vipcc_cfg_get_info('%s')",
 			   -res,
-			   VIPC_DEPTH_MAP_STREAM);
+			   vipc_depth_map_stream.c_str());
 		goto error;
 	} else {
 		/* Create vipc client */
@@ -544,8 +580,7 @@ void HelloServiceCommandHandler::processingStart(
 	}
 
 error:
-	/* TODO */
-	;
+	vipcc_cfg_release_info(&vipc_info);
 }
 
 void HelloServiceCommandHandler::processingStop(

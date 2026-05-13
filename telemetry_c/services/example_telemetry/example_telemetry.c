@@ -41,10 +41,10 @@
 ULOG_DECLARE_TAG(ULOG_TAG);
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
-#define MAX_SAMPLE 10
+#define MAX_SAMPLE 5
 
-/* Union position_vector */
-union position_vector {
+/* Union sensor_vector */
+union sensor_vector {
 	float v[3];
 	struct {
 		float x;
@@ -54,15 +54,22 @@ union position_vector {
 };
 
 /**
- * drone_controller data structure used in the sample consumer example to get
+ * imu_data structure used in the sample consumer example to get
  * some data about the drone
  */
-struct drone_controller_data {
-	union position_vector position_global;
-	union position_vector position_local;
-	float altitude_ato;
-	float altitude_agl;
-	float atlitude_sea_level;
+struct sensor_imu_data {
+	/* Gyroscope data in SI unit (rad/s) */
+	union sensor_vector gyro[MAX_SAMPLE];
+	/* Accelerometer data in SI unit (m/s2) */
+	union sensor_vector acc[MAX_SAMPLE];
+	/* Temperature data in SI unit (K) */
+	float temp[MAX_SAMPLE];
+	/* fsync information about samples (ns) */
+	int32_t fsync[MAX_SAMPLE];
+	/* Number of samples in gyroscope & accelerometer fifo */
+	uint8_t nb_samples;
+	/* Samples timestamps */
+	struct timespec timestamp[MAX_SAMPLE];
 };
 
 /* Context for the telemetry */
@@ -85,14 +92,15 @@ struct example_telemetry_context {
 	size_t ref_array_sample_1;
 
 	struct tlm_consumer *array_sample_consumer_2;
-	float imu_gyro_x[MAX_SAMPLE];
-	float imu_acc_x[MAX_SAMPLE];
+	float magnetic_field_ut_x[MAX_SAMPLE];
+	float magnetic_field_ut_y[MAX_SAMPLE];
+	float magnetic_field_ut_z[MAX_SAMPLE];
 	size_t nb_array_sample_2;
 	size_t ref_array_sample_2;
 
 	/* Struct sample consumer example */
 	struct tlm_consumer *struct_sample_consumer;
-	struct drone_controller_data drone_ctrl_data;
+	struct sensor_imu_data imu_data;
 
 	/* New value example */
 	struct tlm_producer *my_producer;
@@ -102,54 +110,33 @@ struct example_telemetry_context {
 };
 
 /* --- this part is used by the struct sample consumer example --- */
-static const struct tlm_reg_field tlm_drone_controller_vec3_fields[] = {
-	TLM_REG_FIELD_SCALAR(union position_vector, x, TLM_TYPE_FLOAT32),
-	TLM_REG_FIELD_SCALAR(union position_vector, y, TLM_TYPE_FLOAT32),
-	TLM_REG_FIELD_SCALAR(union position_vector, z, TLM_TYPE_FLOAT32),
+static const struct tlm_reg_field sensors_tlm_imu_vec3_fields[] = {
+	TLM_REG_FIELD_SCALAR(union sensor_vector, x, TLM_TYPE_FLOAT32),
+	TLM_REG_FIELD_SCALAR(union sensor_vector, y, TLM_TYPE_FLOAT32),
+	TLM_REG_FIELD_SCALAR(union sensor_vector, z, TLM_TYPE_FLOAT32),
 };
 
-static const struct tlm_reg_struct
-	tlm_drone_controller_position_global_reg_struct =
-		TLM_REG_STRUCT("position_global",
-			       tlm_drone_controller_vec3_fields);
+static const struct tlm_reg_struct sensors_tlm_imu_acc_reg_struct =
+	TLM_REG_STRUCT("acc", sensors_tlm_imu_vec3_fields);
 
-static const struct tlm_reg_struct
-	tlm_drone_controller_position_local_reg_struct =
-		TLM_REG_STRUCT("position_local",
-			       tlm_drone_controller_vec3_fields);
+static const struct tlm_reg_struct sensors_tlm_imu_gyro_reg_struct =
+	TLM_REG_STRUCT("gyro", sensors_tlm_imu_vec3_fields);
 
-
-static const struct tlm_reg_field tlm_drone_controller_fields[] = {
-	TLM_REG_FIELD_STRUCT(
-		/* struct of reference */
-		struct drone_controller_data,
-		/* variable to register */
-		position_global,
-		/* struct type */
-		&tlm_drone_controller_position_global_reg_struct),
-	TLM_REG_FIELD_STRUCT(struct drone_controller_data,
-			     position_local,
-			     &tlm_drone_controller_position_local_reg_struct),
-	TLM_REG_FIELD_SCALAR(struct drone_controller_data,
-			     altitude_ato,
-			     TLM_TYPE_FLOAT32),
-	TLM_REG_FIELD_SCALAR(struct drone_controller_data,
-			     altitude_agl,
-			     TLM_TYPE_FLOAT32),
-	TLM_REG_FIELD_SCALAR_EX(
-		/* struct of reference */
-		struct drone_controller_data,
-		/* variable to register */
-		atlitude_sea_level,
-		/* data name is present if the name of the variable to register
-		is different */
-		"takeoff_altitude_amsl",
-		/* type float*/
-		TLM_TYPE_FLOAT32),
+static const struct tlm_reg_field sensors_tlm_imu_fields[] = {
+	TLM_REG_FIELD_STRUCT_ARRAY(struct sensor_imu_data,
+				   gyro,
+				   &sensors_tlm_imu_gyro_reg_struct),
+	TLM_REG_FIELD_STRUCT_ARRAY(struct sensor_imu_data,
+				   acc,
+				   &sensors_tlm_imu_acc_reg_struct),
+	TLM_REG_FIELD_SCALAR_ARRAY_EX(struct sensor_imu_data,
+				      temp,
+				      "temperature",
+				      TLM_TYPE_FLOAT32),
 };
 
-static const struct tlm_reg_struct tlm_reg_drone_controller =
-	TLM_REG_STRUCT(NULL, tlm_drone_controller_fields);
+static const struct tlm_reg_struct sensors_tlm_reg_imu =
+	TLM_REG_STRUCT(NULL, sensors_tlm_imu_fields);
 
 /* --- end of this part is used by the struct sample consumer example --- */
 
@@ -168,9 +155,9 @@ static int init_single_sample_consumer_1(struct example_telemetry_context *ctx)
 
 	/**
 	 * Register "pressure" from the sensors_barometer telemetry section.
-	 * This telemetry field is a scalar float. Only 1 sample is consumed with
-	 * tlm_consumer_reg function. The type of the registered variable is
-	 * float.
+	 * This telemetry field is a scalar float. Only 1 sample is consumed
+	 * with tlm_consumer_reg function. The type of the registered variable
+	 * is float.
 	 *
 	 * Only one variable is registered with this method.
 	 */
@@ -282,7 +269,7 @@ static int init_array_sample_consumer_1(struct example_telemetry_context *ctx)
 	/**
 	 * Register the altitude above ground level "altitude_agl" from the
 	 * drone_controller telemetry section. This telemetry field is a scalar
-	 * float and we want to consume the last MAX_SAMPLE (10) samples. The
+	 * float and we want to consume the last MAX_SAMPLE samples. The
 	 * type of the registered variable is float[MAX_SAMPLE].
 	 *
 	 * Only one array of samples is registered with this method.
@@ -328,42 +315,50 @@ static int init_array_sample_consumer_2(struct example_telemetry_context *ctx)
 	/* --- SECOND METHOD: tlm_consumer_reg_entries_of_samples_array --- */
 
 	/**
-	 * Register several data from the IMU sensor (sensors_imu) telemetry
-	 * section. These telemetry fields are a scalar float and we want to
-	 * consume the last MAX_SAMPLE (10) samples. The type of the registered
-	 * variables is float[MAX_SAMPLE].
+	 * Register several data from the magnetometer (sensors_magnetometer)
+	 * telemetry section. This telemetry field is a scalar float and we
+	 * want to consume the last MAX_SAMPLE samples. The type of the
+	 * registered variables is float[MAX_SAMPLE].
 	 *
 	 * Several arrays of samples are registered with this method.
 	 */
 
-	const struct tlm_consumer_reg_samples_entry
-		sensors_magnetometer_array[] = {
-			{
-				/* variable to register */
-				.ptr = ctx->imu_gyro_x,
-				/* section + data name */
-				.name = "sensors_imu.gyro[0].x",
-				/* type float*/
-				.type = TLM_TYPE_FLOAT32,
-				/* float size */
-				.size = sizeof(float),
-				/* 1 element in the variable */
-				.count = 1,
-				/* 10 samples */
-				.nb_samples = MAX_SAMPLE,
-				/* no need to store timestamp of samples */
-				.timestamps = NULL,
-			},
-			{
-				.ptr = ctx->imu_acc_x,
-				.name = "sensors_imu.acc[0].x",
-				.type = TLM_TYPE_FLOAT32,
-				.size = sizeof(float),
-				.count = 1,
-				.nb_samples = MAX_SAMPLE,
-				.timestamps = NULL,
-			},
-		};
+	const struct tlm_consumer_reg_samples_entry sensors_magnetometer_array[] = {
+		{
+			/* variable to register */
+			.ptr = ctx->magnetic_field_ut_x,
+			/* section + data name */
+			.name = "sensors_magnetometer.magnetic_field_ut.x",
+			/* type float*/
+			.type = TLM_TYPE_FLOAT32,
+			/* float size */
+			.size = sizeof(float),
+			/* 1 element in the variable */
+			.count = 1,
+			/* 10 samples */
+			.nb_samples = MAX_SAMPLE,
+			/* no need to store timestamp of samples */
+			.timestamps = NULL,
+		},
+		{
+			.ptr = ctx->magnetic_field_ut_y,
+			.name = "sensors_magnetometer.magnetic_field_ut.y",
+			.type = TLM_TYPE_FLOAT32,
+			.size = sizeof(float),
+			.count = 1,
+			.nb_samples = MAX_SAMPLE,
+			.timestamps = NULL,
+		},
+		{
+			.ptr = ctx->magnetic_field_ut_z,
+			.name = "sensors_magnetometer.magnetic_field_ut.z",
+			.type = TLM_TYPE_FLOAT32,
+			.size = sizeof(float),
+			.count = 1,
+			.nb_samples = MAX_SAMPLE,
+			.timestamps = NULL,
+		},
+	};
 
 	res = tlm_consumer_reg_entries_of_samples_array(
 		ctx->array_sample_consumer_2,
@@ -394,16 +389,16 @@ static int init_struct_sample_consumer(struct example_telemetry_context *ctx)
 	int res;
 
 	/**
-	 * Register a tlm_reg_struct structure from the drone_controller
+	 * Register a tlm_reg_struct structure from the sensors_imu
 	 * telemetry section.
 	 *
 	 * Several array of samples are registered with this method.
 	 */
 
 	res = tlm_consumer_reg_struct_ptr(ctx->struct_sample_consumer,
-					  &ctx->drone_ctrl_data,
-					  "drone_controller",
-					  &tlm_reg_drone_controller);
+					  &ctx->imu_data,
+					  "sensors_imu",
+					  &sensors_tlm_reg_imu);
 	if (res < 0) {
 		ULOG_ERRNO("init_struct_sample_consumer", -res);
 		goto out;
@@ -731,34 +726,42 @@ void example_telemetry_log_values(struct example_telemetry_context *ctx)
 		ULOGI("####     altitude_agl[%d]: %f", i, ctx->altitude_agl[i]);
 	ULOGI("####  nb_array_sample_1 : %ld", ctx->nb_array_sample_1);
 	ULOGI("####  ref_array_sample_1: %ld", ctx->ref_array_sample_1);
-	ULOGI("#### > imu: gyro + acc:");
+	ULOGI("#### > sensors_magnetometer:");
 	for (int i = 0; i < MAX_SAMPLE; i++) {
-		ULOGI("####     imu_gyro_x[%d]: %f", i, ctx->imu_gyro_x[i]);
-		ULOGI("####     imu_acc_x[%d]: %f", i, ctx->imu_acc_x[i]);
+		ULOGI("####     magnetic_field_ut.x[%d]: %f",
+		      i,
+		      ctx->magnetic_field_ut_x[i]);
+	}
+	for (int i = 0; i < MAX_SAMPLE; i++) {
+		ULOGI("####     magnetic_field_ut.y[%d]: %f",
+		      i,
+		      ctx->magnetic_field_ut_y[i]);
+	}
+	for (int i = 0; i < MAX_SAMPLE; i++) {
+		ULOGI("####     magnetic_field_ut.z[%d]: %f",
+		      i,
+		      ctx->magnetic_field_ut_z[i]);
 	}
 	ULOGI("####  nb_array_sample_2 : %ld", ctx->nb_array_sample_2);
 	ULOGI("####  ref_array_sample_2: %ld", ctx->ref_array_sample_2);
 	ULOGI("####");
 	ULOGI("#### struct sample consumer ");
-	ULOGI("#### > drone_controller:");
-	ULOGI("####     position_local_x  %f",
-	      ctx->drone_ctrl_data.position_global.x);
-	ULOGI("####     position_local_y  %f",
-	      ctx->drone_ctrl_data.position_global.y);
-	ULOGI("####     position_local_z  %f",
-	      ctx->drone_ctrl_data.position_global.z);
-	ULOGI("####     position_local_x  %f",
-	      ctx->drone_ctrl_data.position_local.x);
-	ULOGI("####     position_local_y  %f",
-	      ctx->drone_ctrl_data.position_local.y);
-	ULOGI("####     position_local_z  %f",
-	      ctx->drone_ctrl_data.position_local.z);
-	ULOGI("####     altitude_ato      %f",
-	      ctx->drone_ctrl_data.altitude_ato);
-	ULOGI("####     altitude_agl      %f",
-	      ctx->drone_ctrl_data.altitude_agl);
-	ULOGI("####     altitude_seal_lev %f",
-	      ctx->drone_ctrl_data.atlitude_sea_level);
+	ULOGI("#### > sensors_imu:");
+	for (int i = 0; i < MAX_SAMPLE; i++) {
+		ULOGI("####     gyro.x[%d]: %f", i, ctx->imu_data.gyro[i].x);
+		ULOGI("####     gyro.y[%d]: %f", i, ctx->imu_data.gyro[i].y);
+		ULOGI("####     gyro.z[%d]: %f", i, ctx->imu_data.gyro[i].z);
+	}
+	for (int i = 0; i < MAX_SAMPLE; i++) {
+		ULOGI("####     acc.x[%d]: %f", i, ctx->imu_data.acc[i].x);
+		ULOGI("####     acc.y[%d]: %f", i, ctx->imu_data.acc[i].y);
+		ULOGI("####     acc.z[%d]: %f", i, ctx->imu_data.acc[i].z);
+	}
+	for (int i = 0; i < MAX_SAMPLE; i++) {
+		ULOGI("####     temperature.z[%d]: %f",
+		      i,
+		      ctx->imu_data.temp[i]);
+	}
 	ULOGI("####");
 	ULOGI("#### my_consumer");
 	ULOGI("#### > my_section");

@@ -47,7 +47,7 @@ ULOG_DECLARE_TAG(ULOG_TAG);
 
 using namespace trackingExample::mbox;
 
-sig_atomic_t run = 1;
+static volatile sig_atomic_t run = 1;
 
 extern "C" void sig_handler(int sig)
 {

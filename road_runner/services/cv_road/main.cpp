@@ -50,7 +50,7 @@ struct context {
 /* Global context (so the signal handler can access it) */
 static struct context s_ctx;
 /* Stop flag, set to 1 by signal handler to exit cleanly */
-static sig_atomic_t stop;
+static volatile sig_atomic_t stop;
 
 static void context_clean(struct context *ctx)
 {

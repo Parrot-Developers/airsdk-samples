@@ -7,6 +7,7 @@ metadata:
   version: "0.0.0"
 targets:
   Anafi Ai:
+  Anafi UKR:
 services:
   tracking_example:
     lang: c++

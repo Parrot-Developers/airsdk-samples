@@ -42,6 +42,15 @@
 class MissionController {
 private:
 	/**
+	 * Pomp loop pointer.
+	 * This is the main event loop on which timers, sockets,
+	 * and asynchronous callbacks are dispatched.
+	 * We store it here so that we can easily create timers
+	 * (e.g. with pomp_timer_new).
+	 */
+	pomp::Loop &mLoop;
+
+	/**
 	 * a control interface is a Parrot object, responsible for connecting to
 	 * the autopilot, and triggers the 'Send command' and 'Received event'
 	 */
@@ -63,6 +72,9 @@ private:
 	 * or not yet
 	 */
 	bool hasAlreadyHovered;
+
+	/* Camera ID: 0 for Anafi Ai (anafi2), 1 for Anafi UKR (anafi3_mil/p) */
+	uint8_t mCameraId;
 
 public:
 	MissionController(pomp::Loop &loop);
@@ -108,4 +120,12 @@ public:
 	void reactInSmToCameraMode(arsdk::camera::CameraMode mode);
 	void reactInSmToEventPhoto(arsdk::camera::Event *evt);
 	void reactInSmToEventRecording(arsdk::camera::Event *evt);
+
+private:
+	/**
+	Determine the camera ID from the drone model.
+	Returns 0 for Anafi Ai (anafi2), 1 for Anafi UKR (anafi3_mil /
+	anafi3_milp). Logs an error and returns 0 if the model is unknown.
+	 */
+	static uint8_t getCameraIdFromModel();
 };

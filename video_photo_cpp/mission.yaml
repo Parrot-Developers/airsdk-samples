@@ -8,6 +8,8 @@ metadata:
 targets:
   Anafi Ai:
   Anafi Ai Simulator:
+  Anafi UKR:
+  Anafi UKR Simulator:
 services:
   video_photo:
     lang: c++
@@ -17,4 +19,5 @@ services:
       - libarsdk-pb
       - libarsdk-pbc
       - libmsghub
+      - libputils
       - protobuf

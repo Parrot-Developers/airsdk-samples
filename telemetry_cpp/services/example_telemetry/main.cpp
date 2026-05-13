@@ -38,14 +38,72 @@
 #include <ulog.h>
 ULOG_DECLARE_TAG(ULOG_TAG);
 
-#define MAX_SAMPLE 10
+#define MAX_SAMPLE 5
 
-sig_atomic_t run = 1;
+static volatile sig_atomic_t run = 1;
 
 extern "C" void sig_handler(int sig)
 {
 	run = 0;
 }
+
+/* Union sensor_vector */
+union sensor_vector {
+	float v[3];
+	struct {
+		float x;
+		float y;
+		float z;
+	};
+};
+
+/**
+ * imu_data structure used in the sample consumer example to get
+ * some data about the drone
+ */
+struct sensor_imu_data {
+	/* Gyroscope data in SI unit (rad/s) */
+	union sensor_vector gyro[MAX_SAMPLE];
+	/* Accelerometer data in SI unit (m/s2) */
+	union sensor_vector acc[MAX_SAMPLE];
+	/* Temperature data in SI unit (K) */
+	float temp[MAX_SAMPLE];
+	/* fsync information about samples (ns) */
+	int32_t fsync[MAX_SAMPLE];
+	/* Number of samples in gyroscope & accelerometer fifo */
+	uint8_t nb_samples;
+	/* Samples timestamps */
+	struct timespec timestamp[MAX_SAMPLE];
+};
+
+/* --- this part is used by the struct sample consumer example --- */
+static const struct tlm_reg_field sensors_tlm_imu_vec3_fields[] = {
+	TLM_REG_FIELD_SCALAR(union sensor_vector, x, TLM_TYPE_FLOAT32),
+	TLM_REG_FIELD_SCALAR(union sensor_vector, y, TLM_TYPE_FLOAT32),
+	TLM_REG_FIELD_SCALAR(union sensor_vector, z, TLM_TYPE_FLOAT32),
+};
+
+static const struct tlm_reg_struct sensors_tlm_imu_acc_reg_struct =
+	TLM_REG_STRUCT("acc", sensors_tlm_imu_vec3_fields);
+
+static const struct tlm_reg_struct sensors_tlm_imu_gyro_reg_struct =
+	TLM_REG_STRUCT("gyro", sensors_tlm_imu_vec3_fields);
+
+static const struct tlm_reg_field sensors_tlm_imu_fields[] = {
+	TLM_REG_FIELD_STRUCT_ARRAY(struct sensor_imu_data,
+				   gyro,
+				   &sensors_tlm_imu_gyro_reg_struct),
+	TLM_REG_FIELD_STRUCT_ARRAY(struct sensor_imu_data,
+				   acc,
+				   &sensors_tlm_imu_acc_reg_struct),
+	TLM_REG_FIELD_SCALAR_ARRAY_EX(struct sensor_imu_data,
+				      temp,
+				      "temperature",
+				      TLM_TYPE_FLOAT32),
+};
+
+static const struct tlm_reg_struct sensors_tlm_reg_imu =
+	TLM_REG_STRUCT(NULL, sensors_tlm_imu_fields);
 
 struct MyStruct {
 	int myIntergerValue;
@@ -93,6 +151,9 @@ int main(int argc, char *argv[])
 	size_t nb_array_sample;
 	size_t ref_array_sample;
 
+	telemetry::Consumer *struct_sample_consumer;
+	sensor_imu_data imu_data;
+
 	/**
 	 * Produce and consume your own telemetry.
 	 *
@@ -116,6 +177,8 @@ int main(int argc, char *argv[])
 
 	array_sample_consumer = telemetry::Consumer::create();
 
+	struct_sample_consumer = telemetry::Consumer::create();
+
 	my_producer = telemetry::Producer::create(
 		"new_section", /* Name of the producer (section).generally
 						  snake_case */
@@ -128,8 +191,8 @@ int main(int argc, char *argv[])
 	my_consumer = telemetry::Consumer::create();
 
 	my_struct_producer = telemetry::Producer::create(
-		"new_struct_section", /* Name of the producer (section).generally
-								snake_case */
+		"new_struct_section", /* Name of the producer
+					 (section).generally snake_case */
 		"/dev/shm", /* Directory where to create the shared memory.
 					   default = "/dev/shm". */
 		10, /* Maximum number of samples */
@@ -165,6 +228,14 @@ int main(int argc, char *argv[])
 		goto out;
 	}
 
+	struct_sample_consumer->regStructPtr(
+		&imu_data, "sensors_imu", &sensors_tlm_reg_imu);
+	res = struct_sample_consumer->regComplete();
+	if (res < 0) {
+		ULOG_ERRNO("struct_sample_consumer regComplete", -res);
+		goto out;
+	}
+
 	/**
 	 * New value producer registration.
 	 *
@@ -196,8 +267,9 @@ int main(int argc, char *argv[])
 	/**
 	 * New struct producer registration.
 	 *
-	 * Register the new_struct from the new_struct_section telemetry section.
-	 * This telemetry field is a MyStruct. Only 1 sample is produced.
+	 * Register the new_struct from the new_struct_section telemetry
+	 * section. This telemetry field is a MyStruct. Only 1 sample is
+	 * produced.
 	 */
 	new_struct_source.myIntergerValue = 0;
 	new_struct_source.myFloatValue = 0.0;
@@ -211,13 +283,14 @@ int main(int argc, char *argv[])
 	/**
 	 * New struct Consumer registration.
 	 *
-	 * Register the new_struct from the new_struct_section telemetry section.
-	 * This telemetry field is a MyStruct. Only 1 sample is produced.
+	 * Register the new_struct from the new_struct_section telemetry
+	 * section. This telemetry field is a MyStruct. Only 1 sample is
+	 * produced.
 	 */
 	new_struct_destination.myIntergerValue = 0;
 	new_struct_destination.myFloatValue = 0.0;
 	my_struct_consumer->reg(new_struct_destination,
-			       "new_struct_section.new_struct");
+				"new_struct_section.new_struct");
 	res = my_struct_consumer->regComplete();
 	if (res < 0) {
 		ULOG_ERRNO("my_struct_consumer regComplete", -res);
@@ -239,7 +312,7 @@ int main(int argc, char *argv[])
 			new_value_source = 0;
 
 			new_struct_source.myIntergerValue = 0;
-			new_struct_source.myFloatValue= 0.0;
+			new_struct_source.myFloatValue = 0.0;
 		} else {
 			new_value_source++;
 
@@ -310,6 +383,18 @@ int main(int argc, char *argv[])
 			      strerror(-res));
 		}
 
+		/* Get struct sample */
+		res = struct_sample_consumer->getSample(
+			/* timestamp of query (can be nullptr for LATEST
+			   method). */
+			nullptr,
+			/* method of query. */
+			telemetry::Method::TLM_LATEST);
+		if (!res) {
+			ULOGW("Can't read my_consumer sample %s",
+			      strerror(-res));
+		}
+
 		/* Get only one sample */
 		res = my_consumer->getSample(
 			/* timestamp of query (can be nullptr for LATEST
@@ -348,6 +433,23 @@ int main(int argc, char *argv[])
 			      altitude_agl[i]);
 		ULOGI("####  nb_array_sample : %ld", nb_array_sample);
 		ULOGI("####  ref_array_sample: %ld", ref_array_sample);
+		ULOGI("#### struct sample consumer ");
+		ULOGI("#### > sensors_imu:");
+		for (int i = 0; i < MAX_SAMPLE; i++) {
+			ULOGI("####     gyro.x[%d]: %f", i, imu_data.gyro[i].x);
+			ULOGI("####     gyro.y[%d]: %f", i, imu_data.gyro[i].y);
+			ULOGI("####     gyro.z[%d]: %f", i, imu_data.gyro[i].z);
+		}
+		for (int i = 0; i < MAX_SAMPLE; i++) {
+			ULOGI("####     acc.x[%d]: %f", i, imu_data.acc[i].x);
+			ULOGI("####     acc.y[%d]: %f", i, imu_data.acc[i].y);
+			ULOGI("####     acc.z[%d]: %f", i, imu_data.acc[i].z);
+		}
+		for (int i = 0; i < MAX_SAMPLE; i++) {
+			ULOGI("####     temperature.z[%d]: %f",
+			      i,
+			      imu_data.temp[i]);
+		}
 		ULOGI("####");
 		ULOGI("#### my_consumer");
 		ULOGI("#### > new_section");
@@ -372,6 +474,7 @@ int main(int argc, char *argv[])
 out:
 	telemetry::Consumer::release(single_sample_consumer);
 	telemetry::Consumer::release(array_sample_consumer);
+	telemetry::Consumer::release(struct_sample_consumer);
 	telemetry::Producer::release(my_producer);
 	telemetry::Consumer::release(my_consumer);
 

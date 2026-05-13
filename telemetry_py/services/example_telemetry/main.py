@@ -36,6 +36,8 @@ import telemetry_binding
 # This is limited to 15 charecters
 PROCESS_NAME = b"ex_tlm_py"
 
+MAX_SAMPLE = 5
+
 
 async def service_main():
     # Initialisation code
@@ -46,6 +48,7 @@ async def service_main():
     logger = logging.getLogger("main")
     logger.info("Hello from example telemetry")
     run = True
+
     def sig_handler(*_):
         nonlocal run
         run = False
@@ -55,7 +58,7 @@ async def service_main():
 
     single_sample_consumer = telemetry_binding.Consumer("/dev/shm")
     pressure = telemetry_binding.types.float32_t(0.0)
-    temperature = telemetry_binding.types.array_float32_t(0.0, 10)
+    temperature = telemetry_binding.types.array_float32_t(0.0, MAX_SAMPLE)
     single_sample_consumer.reg(pressure, "sensors_barometer.pressure")
     single_sample_consumer.reg(temperature, "sensors_imu.temperature")
     single_sample_consumer.regComplete()
@@ -104,7 +107,7 @@ async def service_main():
         logger.info(f"####     pressure {pressure}")
         logger.info("####")
         logger.info("#### > imu")
-        for i in range(10):
+        for i in range(MAX_SAMPLE):
             logger.info(f"####     temperature[{i}]: {temperature[i]}")
         logger.info("####")
         logger.info("#### my_consumer")

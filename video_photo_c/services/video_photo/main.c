@@ -44,7 +44,7 @@ struct pomp_loop *loop;
 /*
  * Signal handling towards the mission loop process
  */
-static sig_atomic_t stop = 0;
+static volatile sig_atomic_t stop = 0;
 static void sig_handler(int sig)
 {
 	ULOGI("signal %d (%s) received", sig, strsignal(sig));

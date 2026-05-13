@@ -30,7 +30,6 @@
  */
 
 #include <opencv2/imgproc/types_c.h>
-#include <opencv2/opencv.hpp>
 #include <vector>
 
 #include "processing.hpp"
@@ -81,7 +80,8 @@ int SettingReader<struct roadFollowingCfg>::read(const libconfig::Setting &set,
 
 static void do_step(const struct vipc_frame *frame,
 		    struct roadData *road_data,
-		    bool &is_road_detected)
+		    bool &is_road_detected,
+		    cv::ColorConversionCodes colorConversionCodes)
 {
 	cv::Mat frame_ref;
 	cv::Mat frame_grey;
@@ -109,13 +109,42 @@ static void do_step(const struct vipc_frame *frame,
 	(x0, y0) is a point on the line. */
 	cv::Vec4f line;
 
-	cv::cvtColor(cv::Mat(frame->height * 3 / 2,
+	if (frame->num_planes == 2) {
+		/* NV12 */
+
+		/* Y plane */
+		cv::Mat yMat(frame->height,
 			     frame->width,
 			     CV_8UC1,
-			     (void *)frame->planes[0].virt_addr),
-		     frame_ref,
-		     cv::COLOR_YUV2BGR_NV21,
-		     3);
+			     (void *)frame->planes[0].virt_addr,
+			     (size_t)frame->planes[0].stride);
+
+		/* UV plane */
+		cv::Mat uvMat(frame->height / 2,
+			      frame->width / 2,
+			      CV_8UC2,
+			      (void *)frame->planes[1].virt_addr,
+			      (size_t)frame->planes[1].stride);
+
+		cv::cvtColorTwoPlane(
+			yMat, uvMat, frame_ref, colorConversionCodes);
+
+	} else if (frame->num_planes == 3) {
+		/* I420 */
+		cv::cvtColor(cv::Mat(frame->height * 3 / 2,
+				     frame->width,
+				     CV_8UC1,
+				     (void *)frame->planes[0].virt_addr),
+			     frame_ref,
+			     colorConversionCodes,
+			     3);
+	} else {
+		/* fallback */
+		ULOGE("Unsupported frame format: num_planes=%d",
+		      frame->num_planes);
+		is_road_detected = false;
+		return;
+	}
 
 	cv::cvtColor(frame_ref, frame_grey, cv::COLOR_RGB2GRAY);
 	cv::cvtColor(frame_ref, frame_hsv, cv::COLOR_BGR2HSV);
@@ -198,7 +227,7 @@ void Processing::threadEntry()
 
 		/* Do the heavy computation outside lock */
 		mMutex.unlock();
-		do_step(mFrame, &mRoadData, mIsRoadDetected);
+		do_step(mFrame, &mRoadData, mIsRoadDetected, mColorConversionCodes);
 		mMutex.lock();
 
 		mTelemetryConsumer->getSample(nullptr,
@@ -347,6 +376,26 @@ Processing::Processing(pomp::Loop *loop) :
 	res = mTelemetryProducer->regComplete();
 	if (res < 0) {
 		ULOG_ERRNO("telemetry::Producer::regComplete", -res);
+		std::bad_alloc ex;
+		throw ex;
+	}
+
+	/* Get drone model */
+	res = sys_prop_get("ro.model", mDroneModel, "None");
+	if (res < 0) {
+		ULOG_ERRNO("sys_prop_get", -res);
+		throw std::runtime_error("sys_prop_get : failed");
+	} else if (strcmp(mDroneModel, "None") == 0) {
+		ULOGE("ro.model doesn't exist");
+		throw std::runtime_error("sys_prop_get : ro.model doesn't exist");
+	}
+
+	if (strcmp(mDroneModel, "anafi3_mil") == 0 || strcmp(mDroneModel, "anafi3_milp") == 0) {
+		mColorConversionCodes = cv::COLOR_YUV2BGR_NV12;
+	} else if (strcmp(mDroneModel, "anafi2") == 0) {
+		mColorConversionCodes = cv::COLOR_YUV2BGR_NV21;
+	} else {
+		ULOGE("The drone model %s doesn't exist", mDroneModel);
 		std::bad_alloc ex;
 		throw ex;
 	}

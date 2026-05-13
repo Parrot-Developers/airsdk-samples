@@ -21,7 +21,7 @@ static const std::string GRID_PROVIDER_NAME = "default.grid";
 /* The grid server address */
 static const std::string GRID_SERVER_ADDR = "unix:@/tmp/mapping-grid";
 
-sig_atomic_t run = 1;
+static volatile sig_atomic_t run = 1;
 
 /*
  * Context inherits from SpatialPerceptionClient so it can get informed

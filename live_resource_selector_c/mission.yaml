@@ -1,0 +1,17 @@
+api_version: 3
+kind: Mission
+metadata:
+  uid: com.parrot.missions.samples.live_resource_selector_c
+  name: live_resource_selector_c
+  description: Live resource selector c example mission
+  version: "0.0.0"
+targets:
+  Anafi UKR:
+  Anafi UKR Simulator:
+services:
+  resource_selector:
+    lang: c
+    depends:
+    - libairsdk
+    - libarsdk
+    - libarsdk-pb

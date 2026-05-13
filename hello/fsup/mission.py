@@ -1,5 +1,6 @@
 from msghub_utils import msg_id
 from fsup.genmission import AbstractMission
+from fsup.utils import get_property
 from fsup.missions.default.takeoff.stage import (
     TAKEOFF_STAGE as DEF_TAKEOFF_STAGE,
 )
@@ -52,6 +53,8 @@ class Mission(AbstractMission):
         # The airsdk service assumes that the mission is a server: as such it
         # sends events and receive commands.
         self.ext_ui_msgs = self.env.make_airsdk_service_pair(hello_msgs)
+
+        self.drone_model = get_property("ro.model", "None")
 
     def on_unload(self):
         ####################################

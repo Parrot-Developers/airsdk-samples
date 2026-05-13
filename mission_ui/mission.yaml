@@ -1,0 +1,22 @@
+api_version: 3
+kind: Mission
+metadata:
+  uid: com.parrot.missions.samples.mission_ui
+  name: mission_ui
+  description: Add UI elements in FreeFlight application
+  version: "0.0.0"
+targets:
+  Anafi UKR:
+  Anafi UKR Simulator:
+pip:
+  requirements:
+    - uvicorn
+    - websockets
+    - pyserial
+    - fastapi==0.115.12
+services:
+  webserver:
+    lang: python
+    depends:
+      - libairsdk
+      - libairsdk-py

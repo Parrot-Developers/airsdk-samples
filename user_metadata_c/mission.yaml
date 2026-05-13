@@ -1,0 +1,15 @@
+api_version: 3
+kind: Mission
+metadata:
+  uid: com.parrot.missions.samples.user_metadata_c
+  name: user_metadata_c
+  description: User metadata c example mission
+  version: "0.0.0"
+targets:
+  Anafi UKR:
+  Anafi UKR Simulator:
+services:
+  metadata_sender:
+    lang: c
+    depends:
+    - libairsdk

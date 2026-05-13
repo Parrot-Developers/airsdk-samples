@@ -8,6 +8,8 @@ metadata:
 targets:
   Anafi Ai:
   Anafi Ai Simulator:
+  Anafi UKR:
+  Anafi UKR Simulator:
 services:
   video_photo:
     lang: c
@@ -18,4 +20,5 @@ services:
       - libmsghub
       - libpomp
       - libprotobuf-c-base
+      - libputils
       - protobuf-c

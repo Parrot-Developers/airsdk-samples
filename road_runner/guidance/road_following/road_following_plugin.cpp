@@ -41,13 +41,21 @@ ULOG_DECLARE_TAG(ULOG_TAG)
  */
 static RoadFollowing *sRoadFollowing;
 
+#ifdef USE_ANAFI2
 void guidance_plugin_init(guidance::Guidance *guidance)
+#else
+void guidance_plugin_init(guidance::GuidanceLocal *guidance)
+#endif
 {
 	if (guidance->registerMode(sRoadFollowing) < 0)
 		ULOGE("Unable to register road following mode");
 }
 
+#ifdef USE_ANAFI2
 void guidance_plugin_shutdown(guidance::Guidance *guidance)
+#else
+void guidance_plugin_shutdown(guidance::GuidanceLocal *guidance)
+#endif
 {
 	guidance->unregisterMode(sRoadFollowing);
 }

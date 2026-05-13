@@ -28,11 +28,15 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#include "mission_controller.hpp"
+
+#include <putils/properties.h>
+
 #define ULOG_TAG video_photo_ctrl
 #include <ulog.hpp>
 ULOG_DECLARE_TAG(ULOG_TAG);
 
-#include "mission_controller.hpp"
+#define RECORDING_DURATION_MS 10000
 
 /**
  * Custom state machine one can imagine for an example mission whose goal is to
@@ -105,10 +109,31 @@ static void onReceived(airsdk::control::ControlInterface *control_interface,
 	self->onCmdReceived(cmd);
 }
 
-MissionController::MissionController(pomp::Loop &loop)
-	: mControlItf(loop),
-	  mVideoPhotoCurrentState(WAITING_FOR_RECORDING_CONFIG),
-	  hasAlreadyHovered(false)
+
+uint8_t MissionController::getCameraIdFromModel()
+{
+	char model[64] = {0};
+	int res = sys_prop_get("ro.model", model, "None");
+	if (res < 0) {
+		ULOGE("sys_prop_get failed, defaulting to camera_id=0");
+		return 0;
+	}
+	if (strcmp(model, "anafi2") == 0) {
+		return 0; // Anafi Ai : fcam 0
+	} else if (strcmp(model, "anafi3_mil") == 0 ||
+		   strcmp(model, "anafi3_milp") == 0) {
+		return 1; // Anafi UKR : fcam 1
+	} else {
+		ULOGE("Unknown drone model '%s', defaulting camera_id=0",
+		      model);
+		return 0;
+	}
+}
+
+MissionController::MissionController(pomp::Loop &loop) :
+		mLoop(loop), mControlItf(loop),
+		mVideoPhotoCurrentState(WAITING_FOR_RECORDING_CONFIG),
+		hasAlreadyHovered(false), mCameraId(getCameraIdFromModel())
 {
 }
 
@@ -151,9 +176,8 @@ int MissionController::cmdFcamStartPhoto()
 
 	// The camera id involved in photo is the front camera, and has to be
 	// precised when sending the command
-	uint8_t cam_id = 0; // FCAM
-	cmd_start_photo->set_camera_id(cam_id);
-	if (cmd_start_photo->camera_id() != cam_id) {
+	cmd_start_photo->set_camera_id(mCameraId);
+	if (cmd_start_photo->camera_id() != mCameraId) {
 		ULOGE("set_camera_id bad allocation in start photo");
 		return -1;
 	}
@@ -215,9 +239,8 @@ int MissionController::cmdFcamStartRecording()
 
 	// The camera id involved in recording is the front camera, and has to
 	// be precised when sending the command
-	uint8_t cam_id = 0; // FCAM
-	cmd_start_recording->set_camera_id(cam_id);
-	if (cmd_start_recording->camera_id() != cam_id) {
+	cmd_start_recording->set_camera_id(mCameraId);
+	if (cmd_start_recording->camera_id() != mCameraId) {
 		ULOGE("set_camera_id bad allocation in start recording");
 		return -1;
 	}
@@ -279,9 +302,8 @@ int MissionController::cmdFcamStopRecording()
 
 	// The camera id involved in recording is the front camera, and has to
 	// be precised when sending the command
-	uint8_t cam_id = 0; // FCAM
-	cmd_stop_recording->set_camera_id(cam_id);
-	if (cmd_stop_recording->camera_id() != cam_id) {
+	cmd_stop_recording->set_camera_id(mCameraId);
+	if (cmd_stop_recording->camera_id() != mCameraId) {
 		ULOGE("set_camera_id bad allocation in stop recording");
 		return -1;
 	}
@@ -345,9 +367,8 @@ int MissionController::cmdFcamSetConfigPhoto()
 
 	// The camera id involved in photo is the front camera, and has to be
 	// precised when sending the command
-	uint8_t cam_id = 0; // FCAM
-	cmd_configure->set_camera_id(cam_id);
-	if (cmd_configure->camera_id() != cam_id) {
+	cmd_configure->set_camera_id(mCameraId);
+	if (cmd_configure->camera_id() != mCameraId) {
 		ULOGE("set_camera_id bad allocation in set config recording");
 		return -1;
 	}
@@ -445,9 +466,8 @@ int MissionController::cmdFcamSetConfigRecording()
 
 	// The camera id involved in recording is the front camera, and has to
 	// be precised when sending the command
-	uint8_t cam_id = 0; // FCAM
-	cmd_configure->set_camera_id(cam_id);
-	if (cmd_configure->camera_id() != cam_id) {
+	cmd_configure->set_camera_id(mCameraId);
+	if (cmd_configure->camera_id() != mCameraId) {
 		ULOGE("set_camera_id bad allocation in set config recording");
 		return -1;
 	}
@@ -632,6 +652,14 @@ void MissionController::reactInSmToEventPhoto(arsdk::camera::Event *evt)
 	}
 }
 
+static void stopRecordingCb(struct pomp_timer *timer, void *userdata)
+{
+	auto ctrlitf = static_cast<MissionController *>(userdata);
+	ULOGI("Stopping recording after delay");
+	ctrlitf->cmdFcamStopRecording();
+	pomp_timer_destroy(timer);
+}
+
 void MissionController::reactInSmToEventRecording(arsdk::camera::Event *evt)
 {
 	if ((evt->recording().type()
@@ -641,7 +669,18 @@ void MissionController::reactInSmToEventRecording(arsdk::camera::Event *evt)
 		// start command has been sent + the current state noticed that
 		// one has started a recording, then one asks to stop recording
 		this->mVideoPhotoCurrentState = RECORDING_STOPPED;
-		this->cmdFcamStopRecording();
+		// create a timer that will trigger the stop after
+		// RECORDING_DURATION_MS
+		struct pomp_timer *timer =
+			pomp_timer_new(mLoop, stopRecordingCb, this);
+		if (timer) {
+			pomp_timer_set(timer, RECORDING_DURATION_MS);
+			ULOGI("Recording started, will stop in %d ms",
+			      RECORDING_DURATION_MS);
+		} else {
+			ULOGE("Failed to create pomp timer, stopping immediately");
+			this->cmdFcamStopRecording();
+		}
 	} else if ((evt->recording().type()
 		    == arsdk::camera::RecordingEvent::RECORDING_EVENT_STOP)
 		   && (this->mVideoPhotoCurrentState == RECORDING_STOPPED)) {

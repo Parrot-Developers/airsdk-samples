@@ -30,9 +30,13 @@
  */
 #include "mission_controller.h"
 
+#include <putils/properties.h>
+
 #define ULOG_TAG_mission_controller video_photo_ctrl
 #include <ulog.h>
 ULOG_DECLARE_TAG(ULOG_TAG_mission_controller);
+
+#define RECORDING_DURATION_MS 10000
 
 struct mission_controller {
 	/**
@@ -57,7 +61,41 @@ struct mission_controller {
 	 * - take photo
 	 */
 	enum video_photo_state_machine video_photo_current_state;
+
+	/**
+	 * Pomp loop pointer.
+	 * This is the main event loop on which timers, sockets,
+	 * and asynchronous callbacks are dispatched.
+	 * We store it here so that we can easily create timers
+	 * (e.g. with pomp_timer_new).
+	 */
+	struct pomp_loop *loop;
+
+	/* Camera ID: 0 for Anafi Ai (anafi2), 1 for Anafi UKR (anafi3_mil/p) */
+	uint8_t camera_id;
 };
+
+static uint8_t get_camera_id_from_model(void)
+{
+	char model[64] = {0};
+	int res = sys_prop_get("ro.model", model, "None");
+	if (res < 0) {
+		ULOG_ERRNO("sys_prop_get", -res);
+		return 0; /* fallback safe */
+	}
+	if (strcmp(model, "anafi2") == 0) {
+		/* Anafi Ai (anafi2) : fcam 0 */
+		return 0;
+	} else if (strcmp(model, "anafi3_mil") == 0 ||
+		   strcmp(model, "anafi3_milp") == 0) {
+		/* Anafi UKR (anafi3) : fcam 1 */
+		return 1;
+	} else {
+		ULOGE("Unknown drone model '%s', defaulting camera_id=0",
+		      model);
+		return 0;
+	}
+}
 
 struct mission_controller *mission_controller_new(struct pomp_loop *ptr_loop)
 {
@@ -70,6 +108,11 @@ struct mission_controller *mission_controller_new(struct pomp_loop *ptr_loop)
 		mission_controller_destroy(mctrl);
 		return NULL;
 	}
+
+	/* set camera ID according to drone model */
+	mctrl->camera_id = get_camera_id_from_model();
+	/* keep a reference to the pomp loop for timers/callbacks */
+	mctrl->loop = ptr_loop;
 
 	/* allocate a control interface object, link it to the control interface
 	 * member of the mission controller and creates an internal pomp loop */
@@ -222,8 +265,7 @@ static int cmd_fcam_start_photo(struct mission_controller *mctrl)
 
 	// The camera id involved in photo is the front camera, and has to be
 	// precised when sending the command
-	uint8_t cam_id = 0; // FCAM
-	cmd_start_photo.camera_id = cam_id;
+	cmd_start_photo.camera_id = mctrl->camera_id;
 
 	cmd.id_case = ARSDK__CAMERA__COMMAND__ID_START_PHOTO;
 	cmd.start_photo = &cmd_start_photo;
@@ -288,8 +330,7 @@ static int cmd_fcam_start_recording(struct mission_controller *mctrl)
 
 	// The camera id involved in recording is the front camera, and has to
 	// be precised when sending the command
-	uint8_t cam_id = 0; // FCAM
-	cmd_start_recording.camera_id = cam_id;
+	cmd_start_recording.camera_id = mctrl->camera_id;
 
 	cmd.id_case = ARSDK__CAMERA__COMMAND__ID_START_RECORDING;
 	cmd.start_recording = &cmd_start_recording;
@@ -354,8 +395,7 @@ static int cmd_fcam_stop_recording(struct mission_controller *mctrl)
 
 	// The camera id involved in recording is the front camera, and has to
 	// be precised when sending the command
-	uint8_t cam_id = 0; // FCAM
-	cmd_stop_recording.camera_id = cam_id;
+	cmd_stop_recording.camera_id = mctrl->camera_id;
 
 	cmd.id_case = ARSDK__CAMERA__COMMAND__ID_STOP_RECORDING;
 	cmd.stop_recording = &cmd_stop_recording;
@@ -455,8 +495,7 @@ static int cmd_fcam_set_config_photo(struct mission_controller *mctrl)
 
 	// The camera id involved in photo is the front camera, and has to be
 	// precised when sending the command
-	uint8_t cam_id = 0; // FCAM
-	cmd_configure.camera_id = cam_id;
+	cmd_configure.camera_id = mctrl->camera_id;
 
 	cmd_configure.config = &config;
 	cmd.id_case = ARSDK__CAMERA__COMMAND__ID_CONFIGURE;
@@ -549,8 +588,7 @@ static int cmd_fcam_set_config_recording(struct mission_controller *mctrl)
 
 	// The camera id involved in recording is the front camera, and has to
 	// be precised when sending the command
-	uint8_t cam_id = 0; // FCAM
-	cmd_configure.camera_id = cam_id;
+	cmd_configure.camera_id = mctrl->camera_id;
 
 	cmd_configure.config = &config;
 	cmd.id_case = ARSDK__CAMERA__COMMAND__ID_CONFIGURE;
@@ -727,6 +765,14 @@ static void react_in_sm_to_event_photo(Arsdk__Camera__Event *evt,
 	}
 }
 
+static void stop_recording_cb(struct pomp_timer *timer, void *userdata)
+{
+	struct mission_controller *mctrl = userdata;
+	ULOGI("Stopping recording after delay");
+	cmd_fcam_stop_recording(mctrl);
+	pomp_timer_destroy(timer);
+}
+
 static void react_in_sm_to_event_recording(Arsdk__Camera__Event *evt,
 					   struct mission_controller *mctrl)
 {
@@ -736,8 +782,20 @@ static void react_in_sm_to_event_recording(Arsdk__Camera__Event *evt,
 		// if one has received from the drone that a video recording
 		// start command has been sent + the current state noticed that
 		// one has started a recording, then one asks to stop recording
+		// after a short delay instead of immediately
 		mctrl->video_photo_current_state = RECORDING_STOPPED;
-		cmd_fcam_stop_recording(mctrl);
+		// create a timer that will trigger the stop after
+		// RECORDING_DURATION_MS
+		struct pomp_timer *timer =
+			pomp_timer_new(mctrl->loop, stop_recording_cb, mctrl);
+		if (timer) {
+			pomp_timer_set(timer, RECORDING_DURATION_MS);
+			ULOGI("Recording started, will stop in %d ms",
+			      RECORDING_DURATION_MS);
+		} else {
+			ULOGE("Failed to create pomp timer, stopping immediately");
+			cmd_fcam_stop_recording(mctrl);
+		}
 	} else if ((evt->recording->type
 		    == ARSDK__CAMERA__RECORDING_EVENT__RECORDING_EVENT_STOP)
 		   && (mctrl->video_photo_current_state == RECORDING_STOPPED)) {

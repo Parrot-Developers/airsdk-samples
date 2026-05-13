@@ -27,13 +27,21 @@
 #  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 #  SUCH DAMAGE.
 
+from fsup.utils import get_property
+
 import numpy as np
 
 import libguidance_utils_binding as pyguidance
 import libquaternion_binding as quaternion
 import cfgreader
 import telemetry
-import guidance.core as gdnc_core
+
+if get_property("ro.model", "None") == "anafi2":  # anafi2
+    import guidance.core as gdnc_core
+    GuidanceMode = gdnc_core.Mode
+else:  # anafi3
+    import guidance.local.core as gdnc_core
+    GuidanceMode = gdnc_core.LocalMode
 
 import cam_controller.frame_of_reference_pb2 as cam_for_pb2
 import cam_controller.control_mode_pb2 as cam_cm_pb2
@@ -49,14 +57,19 @@ def _config(field):
     return cfgreader.build_config_end(cfg)
 
 
-class LookDownMode(gdnc_core.Mode):
-    def __init__(self, guidance, name):
-        super().__init__(guidance, name)
+class LookDownMode(GuidanceMode):
+    def __init__(self, *args):
+        super().__init__(args[0], args[1])
 
         # Get guidance context
         self.msghub = self.guidance.get_message_hub()
 
-        mode_config_path = guidance.get_config_file(LOOK_DOWN_CONFIG_FILENAME)
+        self.drone_model = get_property("ro.model", "None")
+        # anafi2 : guidance, name = args
+        if self.drone_model == "anafi2":
+            mode_config_path = args[0].get_config_file(LOOK_DOWN_CONFIG_FILENAME)
+        else:  # anafi3 : name, guidance = args
+            mode_config_path = args[1].get_config_file(LOOK_DOWN_CONFIG_FILENAME)
 
         # Get configuration values
         field = [
@@ -129,7 +142,7 @@ class LookDownMode(gdnc_core.Mode):
         # Target reached detector
         self.att_reached_detector_cfg = None
 
-    def configure(self, msg, disable_oa, override_fcam, override_stereo):
+    def configure(self, msg, disable_oa=False, override_fca=False, override_stereo=False):
         # Telemetry
         self.tlm_fcam.fetch_sample()
 
@@ -164,9 +177,11 @@ class LookDownMode(gdnc_core.Mode):
 
     def enter(self):
         self.msghub.attach_message_sender(self.evt_sender, self.channel)
+        return 0
 
     def exit(self):
         self.msghub.detach_message_sender(self.evt_sender)
+        return 0
 
     def begin_step(self):
         # Telemetry: get sample

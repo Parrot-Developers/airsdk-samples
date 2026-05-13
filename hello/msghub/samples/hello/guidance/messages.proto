@@ -7,6 +7,7 @@ package samples.hello.guidance.messages;
 // Ground mode configuration
 message Config {
     bool say = 1;
+    string drone_model = 2;
 }
 
 // Union of all possible commands of this package.

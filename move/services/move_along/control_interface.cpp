@@ -28,7 +28,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#define ULOG_TAG reco_ctrl_ifc
+#define ULOG_TAG mission_move
 #include <ulog.hpp>
 ULOG_DECLARE_TAG(ULOG_TAG);
 
@@ -213,17 +213,6 @@ void ControlInterface::generateRelativeTrajectory()
 	this->mRelativeTrajectory.push_back(relativeTraj);
 }
 
-void ControlInterface::eventInfo(uint32_t missing_inputs)
-{
-	// In case you need to get the inputs the drone misses to perform
-	// correctly
-	arsdk_cmd eventInfo;
-	arsdk_cmd_init(&eventInfo);
-	arsdk_cmd_enc_Move_Info(&eventInfo, missing_inputs);
-	mControlItf.send(&eventInfo);
-	arsdk_cmd_clear(&eventInfo);
-}
-
 int ControlInterface::onCmdReceived(const arsdk_cmd *cmd)
 {
 	int32_t state = 0;
@@ -342,7 +331,20 @@ int ControlInterface::onCmdReceived(const arsdk_cmd *cmd)
 		}
 		if (reason == ARSDK_RTH_STATE_REASON_FINISHED)
 			cmdLand();
-
+		break;
+	case ARSDK_ID_MOVE_INFO:
+		uint32_t missing_input;
+		res = arsdk_cmd_dec_Move_Info(cmd, &missing_input);
+		if (res != 0) {
+			ULOG_ERRNO("arsdk_cmd_dec_Move_Info", -res);
+			return res;
+		}
+		if (missing_input == 0)
+			ULOGI("Drone ready to move");
+		// As an example
+		if ((missing_input & (1 << ARSDK_MOVE_INDICATOR_DRONE_FLYING))
+		    != 0)
+			ULOGE("Drone can't move because not flying");
 		break;
 	default:
 		break;

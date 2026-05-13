@@ -75,7 +75,7 @@ static Context s_ctx;
 /************************************************************************************/
 
 /* Stop flag, set to 1 by signal handler to exit cleanly */
-static sig_atomic_t stop;
+static volatile sig_atomic_t stop;
 
 static void sighandler(int signum)
 {

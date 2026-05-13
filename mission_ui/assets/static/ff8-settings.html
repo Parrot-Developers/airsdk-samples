@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Mission UI Settings Sample</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="ff8.css" />
+</head>
+
+<body class="container settings-container">
+    <div class="block">
+        <p class="block-title">Toolbox</p>
+        <div class="list-row">
+            <div class="btn btn-sm btn-light" type="button">1</div>
+            <div class="btn btn-sm btn-light" type="button">2</div>
+            <div class="btn btn-sm btn-light" type="button">3</div>
+        </div>
+        <button class="btn btn-light" type="button" id="pingPong" onclick="onClickPingPong()">PING</button>
+        <button class="btn btn-light" type="button" id="triggerWebviews" onclick="onClickTriggerWebviews()">Trigger Webviews</button>
+    </div>
+
+    <!-- include WebSocketHelper -->
+    <script src="socket-helpers.js"></script>
+    <!-- include custom Mission UI JS Script -->
+    <script src="script.js"></script>
+</body>
+
+</html>

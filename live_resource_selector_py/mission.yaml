@@ -1,0 +1,15 @@
+api_version: 3
+kind: Mission
+metadata:
+  uid: com.parrot.missions.samples.live_resource_selector_py
+  name: live_resource_selector_py
+  description: Live resource selector python example mission
+  version: "0.0.0"
+targets:
+  Anafi UKR:
+  Anafi UKR Simulator:
+services:
+  resource_selector:
+    lang: python
+    depends:
+    - libairsdk-py

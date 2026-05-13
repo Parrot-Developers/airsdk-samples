@@ -34,6 +34,8 @@ from fsup.genmission import AbstractMission
 # name of an 'id' field.
 from msghub_utils import msg_id
 
+from fsup.utils import get_property
+
 ###################################################
 # Stages and transitions
 
@@ -58,7 +60,11 @@ from fsup.missions.default.mission import TRANSITIONS as DEF_TRANSITIONS
 # Drone messages
 import drone_controller.drone_controller_pb2 as dctl_msgs
 import flight_supervisor.autopilot_pb2 as autopilot_msgs
-import guidance.ascent_pb2 as gdnc_ascent_msgs
+
+if get_property("ro.model", "None") == "anafi2":  # anafi2
+    import guidance.ascent_pb2 as gdnc_ascent_msgs
+else:  # anafi3
+    import guidance.local.plugins.ascent_pb2 as gdnc_ascent_msgs
 import flight_supervisor.internal_pb2 as internal_fsup_msgs
 
 # AirSDK Service messages (cv_road)
@@ -229,18 +235,18 @@ TRANSITIONS = [
     [
         Dctl("motors_ramping_done"),
         "takeoff.normal.wait_ascent",
-        "takeoff.road_runner.ascent",
+        "takeoff.normal.ascent",
     ],
     [
         Dctl("motors_ramping_done"),
         "takeoff.normal.wait_motor_ramping",
-        "takeoff.road_runner.ascent",
+        "takeoff.normal.ascent",
     ],
     # New transitions
-    [GdncAscent("done"), "takeoff.road_runner.ascent", "flying.road_runner.look_down"],  # noqa: E501
+    [GdncAscent("done"), "takeoff.normal.ascent", "flying.road_runner.look_down"],  # noqa: E501
     [
         GdncAscent("done_without_immobility"),
-        "takeoff.road_runner.ascent",
+        "takeoff.normal.ascent",
         "flying.road_runner.look_down",
     ],
     [

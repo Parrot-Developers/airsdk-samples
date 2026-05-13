@@ -36,11 +36,13 @@
 #include <thread>
 #include <csignal>
 #include <unistd.h>
+#include <opencv2/opencv.hpp>
 
 #include <cfgreader/cfgreader.hpp>
 #include <futils/timetools.h>
 #include <libpomp.hpp>
 #include <libtelemetry.hpp>
+#include <putils/properties.h>
 #include <video-ipc/vipc_client.h>
 
 #include "listener.hpp"
@@ -143,6 +145,10 @@ private:
 	float mTlmYVelocity;
 	float mTlmZVelocity;
 	float mTlmYawVelocity;
+
+	/* Drone model */
+	char mDroneModel[SYS_PROP_VALUE_MAX];
+	cv::ColorConversionCodes mColorConversionCodes;
 
 private:
 	/* Thread function */

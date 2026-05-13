@@ -29,12 +29,11 @@
 
 from fsup.missions.default.takeoff.stage import Takeoff as DefaultTakeoff
 
-from .normal import NORMAL_STATE
 from .road_runner import ROAD_RUNNER_STATE
 
 TAKEOFF_STAGE = {
     "name": "takeoff",
     "class": DefaultTakeoff,
     "initial": "normal",
-    "children": [ROAD_RUNNER_STATE, NORMAL_STATE],
+    "children": [ROAD_RUNNER_STATE],
 }

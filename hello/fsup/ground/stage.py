@@ -1,6 +1,11 @@
 from msghub_utils import is_msg
 from fsup.genstate import State, guidance_modes
-import colibrylite.estimation_mode_pb2 as cbry_est
+from fsup.utils import get_property
+
+if get_property("ro.model", "None") == "anafi2":  # anafi2
+    import colibrylite.estimation_mode_pb2 as ctl_est
+else:  # anafi3
+    import drone_controller.estimation_mode_pb2 as ctl_est
 
 from fsup.missions.default.ground.stage import GROUND_STAGE as DEF_GROUND_STAGE
 import samples.hello.guidance.messages_pb2 as hello_gdnc_mode_msgs
@@ -15,18 +20,22 @@ _GROUND_MODE_NAME = UID + ".ground"
 @guidance_modes(_GROUND_MODE_NAME)
 class Idle(State):
     def enter(self, msg):
-        self.mc.dctl.cmd.sender.set_estimation_mode(cbry_est.MOTORS_STOPPED)
+        self.mc.dctl.cmd.sender.set_estimation_mode(ctl_est.MOTORS_STOPPED)
         self.set_guidance_mode(
-            _GROUND_MODE_NAME, hello_gdnc_mode_msgs.Config(say=False)
+            _GROUND_MODE_NAME,
+            hello_gdnc_mode_msgs.Config(
+                say=False, drone_model=self.mission.drone_model
+            ),
         )
 
 
 @guidance_modes(_GROUND_MODE_NAME)
 class Say(State):
     def enter(self, msg):
-        self.mc.dctl.cmd.sender.set_estimation_mode(cbry_est.MOTORS_STOPPED)
+        self.mc.dctl.cmd.sender.set_estimation_mode(ctl_est.MOTORS_STOPPED)
         self.set_guidance_mode(
-            _GROUND_MODE_NAME, hello_gdnc_mode_msgs.Config(say=True)
+            _GROUND_MODE_NAME,
+            hello_gdnc_mode_msgs.Config(say=True, drone_model=self.mission.drone_model),
         )
 
     # State machine will call the state step method with the guidance ground

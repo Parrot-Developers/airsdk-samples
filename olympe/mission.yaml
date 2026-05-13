@@ -1,0 +1,13 @@
+api_version: 3
+kind: Mission
+metadata:
+  uid: com.parrot.missions.samples.olympe
+  name: olympe
+  description: Sample using Air SDK illustrating the use of the Olympe SDK on the drone.
+  version: "0.0.0"
+targets:
+  Anafi UKR:
+  Anafi UKR Simulator:
+services:
+  photo:
+    lang: python

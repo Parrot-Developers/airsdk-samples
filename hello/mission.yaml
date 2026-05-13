@@ -8,6 +8,8 @@ metadata:
 targets:
   Anafi Ai:
   Anafi Ai Simulator:
+  Anafi UKR:
+  Anafi UKR Simulator:
 fsup:
   lang: "python"
   depends:
@@ -33,6 +35,7 @@ services:
       - msghub::cv_service
       - libmsghub
       - protobuf
+      - libputils
       - libtelemetry
       - libvideo-ipc
       - libvideo-ipc-client-config

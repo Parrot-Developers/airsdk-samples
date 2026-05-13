@@ -8,6 +8,8 @@ metadata:
 targets:
   Anafi Ai:
   Anafi Ai Simulator:
+  Anafi UKR:
+  Anafi UKR Simulator:
 services:
   example_telemetry:
     lang: c++

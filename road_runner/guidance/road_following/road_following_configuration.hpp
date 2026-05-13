@@ -31,7 +31,11 @@
 
 #pragma once
 
+#ifdef USE_ANAFI2
 #include <guidance.hpp>
+#else
+#include <guidance/local.hpp>
+#endif
 
 struct RoadFollowingConfiguration : public guidance::ModeConfiguration {
 	/* tick period [s] */

@@ -125,7 +125,5 @@ public:
 
 	void generateRelativeTrajectory();
 
-	void eventInfo(uint32_t missingInputs);
-
 	int onCmdReceived(const arsdk_cmd *cmd);
 };

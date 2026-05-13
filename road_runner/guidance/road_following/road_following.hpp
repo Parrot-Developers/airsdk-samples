@@ -37,7 +37,11 @@
 using RoadFollowingEventSender =
 	::road_runner::guidance::road_following::messages::msghub::EventSender;
 
+#ifdef USE_ANAFI2
 class RoadFollowing : public guidance::Mode {
+#else
+class RoadFollowing : public guidance::LocalMode {
+#endif
 private:
 	/* Message Sender */
 	RoadFollowingEventSender mEventSender;
@@ -65,7 +69,12 @@ public:
 	 * Constructor
 	 * @param guidance Guidance object
 	 */
+
+#ifdef USE_ANAFI2
 	RoadFollowing(guidance::Guidance *guidance);
+#else
+	RoadFollowing(guidance::GuidanceBase *guidance);
+#endif
 
 	/**
 	 * Destructor
@@ -77,15 +86,21 @@ public:
 	virtual void getTriggers(uint32_t *triggers,
 				 uint32_t *timeout,
 				 uint32_t *period) override;
+#ifdef USE_ANAFI2
 	void configure(const ::google::protobuf::Any &config,
 		       bool disableObstacleAvoidance,
 		       bool overrideFrontCamera,
 		       bool overrideStereoCamera) override;
 	virtual const std::string &getName() const override;
 	virtual void enter() override;
+	virtual void exit() override;
+#else
+	void configure(const ::google::protobuf::Any &config) override;
+	virtual int enter() override;
+	virtual int exit() override;
+#endif
 	virtual void beginStep() override;
 	virtual void generateDroneReference() override;
 	virtual void generateAttitudeReferences() override;
 	virtual void endStep() override;
-	virtual void exit() override;
 };

@@ -1,3 +1,5 @@
+from fsup.utils import get_property
+
 import numpy as np
 
 import libpomp
@@ -6,14 +8,19 @@ import telemetry
 import cam_controller.frame_of_reference_pb2 as cam_for_pb2
 import cam_controller.control_mode_pb2 as cam_cm_pb2
 
-import guidance.core as gdnc_core
+if get_property("ro.model", "None") == "anafi2":  # anafi2
+    import guidance.core as gdnc_core
+    GuidanceMode = gdnc_core.Mode
+else:  # anafi3
+    import guidance.local.core as gdnc_core
+    GuidanceMode = gdnc_core.LocalMode
 
 import samples.hello.guidance.messages_pb2 as HelloGroundModeMessages
 
 from msghub_utils import service_name
 
 
-class HelloGroundMode(gdnc_core.Mode):
+class HelloGroundMode(GuidanceMode):
     FCAM_PITCH_ANIMATION_PERIOD_MS = 5000
     FCAM_PITCH_ANIMATION = [
         0.0, -0.2, -0.8, -2.0, -3.8, -6.6, -10.4, -15.5, -22.0, -30.1, -40.0,
@@ -21,8 +28,8 @@ class HelloGroundMode(gdnc_core.Mode):
         -11.9, -25.4, -26.9, -22.4, -18.0, -13.5, -9.0, -4.4, 0.0
     ]
 
-    def __init__(self, guidance, name):
-        super().__init__(guidance, name)
+    def __init__(self, *args):
+        super().__init__(args[0], args[1])
         self.loop = self.guidance.get_loop()
         self.msghub = self.guidance.get_message_hub()
         self.front_cam_pitch_index = 0
@@ -60,11 +67,12 @@ class HelloGroundMode(gdnc_core.Mode):
     def get_triggers(self):
         return (gdnc_core.Trigger.TIMER, 30, 30)
 
-    def configure(self, msg, disable_oa, override_fcam, override_stereo):
+    def configure(self, msg, disable_oa=False, override_fcam=False, override_stereo=False):
         ground_mode_msg = gdnc_core.unpack_config(
             msg, HelloGroundModeMessages.Config
         )
         self.say = ground_mode_msg.say
+        self.drone_model = ground_mode_msg.drone_model
 
         self.output.has_front_cam_config = True
         self.output.front_cam_config.yaw.locked = True
@@ -92,10 +100,12 @@ class HelloGroundMode(gdnc_core.Mode):
 
     def enter(self):
         self.msghub.attach_message_sender(self.evt_sender, self.channel)
+        return 0
 
     def exit(self):
         self.msghub.detach_message_sender(self.evt_sender)
         libpomp.pomp_timer_clear(self.timer)
+        return 0
 
     def begin_step(self):
         self.tlm_dctl.fetch_sample()
@@ -131,21 +141,23 @@ class HelloGroundMode(gdnc_core.Mode):
         fcam_ref.roll.ctrl_mode = cam_cm_pb2.POSITION
         fcam_ref.roll.frame_of_ref = cam_for_pb2.NED
         fcam_ref.roll.position = 0.0
-        # Stereo
-        self.output.has_stereo_cam_reference = True
-        stcam_ref = self.output.stereo_cam_reference
 
-        stcam_ref.yaw.ctrl_mode = cam_cm_pb2.POSITION
-        stcam_ref.yaw.frame_of_ref = cam_for_pb2.NED
-        stcam_ref.yaw.position = self.tlm_dctl["attitude_euler_angles.yaw"]
+        if self.drone_model == "anafi2":
+            # Stereo
+            self.output.has_stereo_cam_reference = True
+            stcam_ref = self.output.stereo_cam_reference
 
-        stcam_ref.pitch.ctrl_mode = cam_cm_pb2.POSITION
-        stcam_ref.pitch.frame_of_ref = cam_for_pb2.NED
-        stcam_ref.pitch.position = self.tlm_dctl["attitude_euler_angles.pitch"]
+            stcam_ref.yaw.ctrl_mode = cam_cm_pb2.POSITION
+            stcam_ref.yaw.frame_of_ref = cam_for_pb2.NED
+            stcam_ref.yaw.position = self.tlm_dctl["attitude_euler_angles.yaw"]
 
-        stcam_ref.roll.ctrl_mode = cam_cm_pb2.POSITION
-        stcam_ref.roll.frame_of_ref = cam_for_pb2.NED
-        stcam_ref.roll.position = self.tlm_dctl["attitude_euler_angles.roll"]
+            stcam_ref.pitch.ctrl_mode = cam_cm_pb2.POSITION
+            stcam_ref.pitch.frame_of_ref = cam_for_pb2.NED
+            stcam_ref.pitch.position = self.tlm_dctl["attitude_euler_angles.pitch"]
+
+            stcam_ref.roll.ctrl_mode = cam_cm_pb2.POSITION
+            stcam_ref.roll.frame_of_ref = cam_for_pb2.NED
+            stcam_ref.roll.position = self.tlm_dctl["attitude_euler_angles.roll"]
 
     def _timer_cb(self):
         self.log.info("Hello world")

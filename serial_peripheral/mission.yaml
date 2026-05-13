@@ -1,0 +1,18 @@
+api_version: 3
+kind: Mission
+metadata:
+  uid: com.parrot.missions.samples.serial_peripheral
+  name: serial_peripheral
+  description: Demonstrate serial communication between the drone and an external peripheral module
+  version: "0.0.0"
+targets:
+  Anafi UKR:
+pip:
+  requirements:
+    - pyserial
+services:
+  led_blink:
+    lang: python
+    depends:
+      - libairsdk
+      - libairsdk-py

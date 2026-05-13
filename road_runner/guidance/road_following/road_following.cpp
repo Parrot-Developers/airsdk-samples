@@ -41,13 +41,21 @@ static const std::string ROAD_FOLLOWING_MODE_NAME =
 static const std::string ROAD_FOLLOWING_CONFIG_PATH =
 	"/etc/guidance/road_following/mode.cfg";
 
+#ifdef USE_ANAFI2
 RoadFollowing::RoadFollowing(guidance::Guidance *guidance) : Mode(guidance)
+#else
+RoadFollowing::RoadFollowing(guidance::GuidanceBase *guidance) : LocalMode(ROAD_FOLLOWING_MODE_NAME, guidance)
+#endif
 {
 	int res;
 
 	/* read configuration */
 	res = mConfiguration.read(
+#ifdef USE_ANAFI2
 		guidance->getConfigFile(ROAD_FOLLOWING_CONFIG_PATH));
+#else
+		mGuidance->getConfigFile(ROAD_FOLLOWING_CONFIG_PATH));
+#endif
 	if (res < 0) {
 		ULOG_ERRNO("Guidance::getConfigFile", res);
 		goto out;
@@ -106,10 +114,12 @@ RoadFollowing::~RoadFollowing()
 	telemetry::Consumer::release(mTelemetryDroneConsumer);
 }
 
+#ifdef USE_ANAFI2
 const std::string &RoadFollowing::getName() const
 {
 	return ROAD_FOLLOWING_MODE_NAME;
 }
+#endif
 
 bool RoadFollowing::hasObstacleAvoidance()
 {
@@ -125,10 +135,14 @@ void RoadFollowing::getTriggers(uint32_t *triggers,
 	*period = mConfiguration.tickPeriod;
 }
 
+#ifdef USE_ANAFI2
 void RoadFollowing::configure(const ::google::protobuf::Any &config,
 			      bool disableObstacleAvoidance,
 			      bool overrideFrontCamera,
 			      bool overrideStereoCamera)
+#else
+void RoadFollowing::configure(const ::google::protobuf::Any &config)
+#endif
 {
 	guidance::Output *output = getOutput();
 
@@ -148,15 +162,29 @@ void RoadFollowing::configure(const ::google::protobuf::Any &config,
 	frontYawConfig->set_filtered(true);
 }
 
+#ifdef USE_ANAFI2
 void RoadFollowing::enter()
+#else
+int RoadFollowing::enter()
+#endif
 {
+#ifdef USE_ANAFI2
 	::msghub::Channel *channel =
 		mGuidance->getChannel(guidance::CHANNEL_KIND_GUIDANCE);
 	mGuidance->getMessageHub()->attachMessageSender(&mEventSender, channel);
+#else
+	::msghub::Channel *channel =
+		mGuidance->getChannel(guidance::ChannelKind::GUIDANCE);
+	mGuidance->getMessageHub().attachMessageSender(&mEventSender, channel);
+#endif
 
 	/* Send message to enable cv_service */
 	const ::google::protobuf::Empty message;
 	mEventSender.roadFollowingEnabled(message);
+
+#ifndef USE_ANAFI2
+	return 0;
+#endif
 }
 
 void RoadFollowing::beginStep()
@@ -224,7 +252,9 @@ void RoadFollowing::generateAttitudeReferences()
 	yawRate->set_config(ColibryLite::Messages::YawControlConfig::DEFAULT);
 	yawRate->set_ref(mYawVelocityEst);
 
+#ifdef USE_ANAFI2
 	output->mHasStereoCamReference = false;
+#endif
 
 	// https://developer.parrot.com/docs/airsdk/general/guidance_api.html#_CPPv4N8guidance6Output17FrontCamReferenceE
 	output->mHasFrontCamReference = true;
@@ -249,11 +279,21 @@ void RoadFollowing::endStep()
 	/* Unused in this mode. Not mandatory. */
 }
 
+#ifdef USE_ANAFI2
 void RoadFollowing::exit()
+#else
+int RoadFollowing::exit()
+#endif
 {
 	/* Send message to disable cv_service */
 	const ::google::protobuf::Empty message;
 	mEventSender.roadFollowingDisabled(message);
 
+#ifdef USE_ANAFI2
 	mGuidance->getMessageHub()->detachMessageSender(&mEventSender);
+#else
+	mGuidance->getMessageHub().detachMessageSender(&mEventSender);
+
+	return 0;
+#endif
 }

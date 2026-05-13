@@ -30,15 +30,28 @@
 from fsup.genstate import guidance_modes
 from fsup.missions.default.takeoff.normal import (
     Ascent as DefaultAscent,
+    AscentManual as DefaultAscentManual,
+    Reset as DefaultReset,
+    StartingMotors as DefaultStartingMotors,
+    WaitMotorRamping as DefaultWaitMotorRamping,
+    WaitAscent as DefaultWaitAscent,
+    StoppingMotors as DefaultStoppingMotors,
+    WaitUntilSteady as DefaultWaitUntilSteady,
 )
 
 from fsup.missions.default.uid import UID
 
+from fsup.utils import get_property
+
 import os
 import cfgreader
-import colibrylite.estimation_mode_pb2 as cbry_est
 
-import guidance.ascent_pb2 as gdnc_ascent_msgs
+if get_property("ro.model", "None") == "anafi2":  # anafi2
+    import colibrylite.estimation_mode_pb2 as ctl_est
+    import guidance.ascent_pb2 as gdnc_ascent_msgs
+else:  # anafi3
+    import drone_controller.estimation_mode_pb2 as ctl_est
+    import guidance.local.plugins.ascent_pb2 as gdnc_ascent_msgs
 
 _STATES_TO_REMOVE = ["ascent"]
 
@@ -73,7 +86,7 @@ class Ascent(DefaultAscent):
         self.gdnc_asc_svc = self.mc.attach_client_service_pair(
             self.mc.gdnc_channel, gdnc_ascent_msgs, forward_events=True
         )
-        self.mc.dctl.cmd.sender.set_estimation_mode(cbry_est.TAKEOFF)
+        self.mc.dctl.cmd.sender.set_estimation_mode(ctl_est.TAKEOFF)
 
         self.set_guidance_mode(
             "com.parrot.missions.default.ascent",
@@ -85,12 +98,40 @@ class Ascent(DefaultAscent):
 
 
 ROAD_RUNNER_STATE = {
-    "name": "road_runner",
-    "initial": "ascent",
+    "name": "normal",
+    "initial": "reset",
     "children": [
+        {
+            "name": "reset",
+            "class": DefaultReset,
+        },
+        {
+            "name": "starting_motors",
+            "class": DefaultStartingMotors,
+        },
+        {
+            "name": "wait_motor_ramping",
+            "class": DefaultWaitMotorRamping,
+        },
+        {
+            "name": "wait_ascent",
+            "class": DefaultWaitAscent,
+        },
         {
             "name": "ascent",
             "class": Ascent,
+        },
+        {
+            "name": "ascent_manual",
+            "class": DefaultAscentManual,
+        },
+        {
+            "name": "stopping_motors",
+            "class": DefaultStoppingMotors,
+        },
+        {
+            "name": "wait_until_steady",
+            "class": DefaultWaitUntilSteady,
         },
     ],
 }
