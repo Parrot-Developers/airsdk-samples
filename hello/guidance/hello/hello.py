@@ -1,4 +1,4 @@
-from fsup.utils import get_property
+from putils import get_property
 
 import numpy as np
 

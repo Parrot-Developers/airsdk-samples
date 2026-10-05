@@ -1,0 +1,713 @@
+/*
+//    Copyright (C) 2026 Parrot Drones SAS
+//
+//    Redistribution and use in source and binary forms, with or without
+//    modification, are permitted provided that the following conditions
+//    are met:
+//    * Redistributions of source code must retain the above copyright
+//      notice, this list of conditions and the following disclaimer.
+//    * Redistributions in binary form must reproduce the above copyright
+//      notice, this list of conditions and the following disclaimer in
+//      the documentation and/or other materials provided with the
+//      distribution.
+//    * Neither the name of the Parrot Company nor the names
+//      of its contributors may be used to endorse or promote products
+//      derived from this software without specific prior written
+//      permission.
+//
+//    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+//    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+//    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+//    FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+//    PARROT COMPANY BE LIABLE FOR ANY DIRECT, INDIRECT,
+//    INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+//    BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+//    OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//    AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+//    OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+//    OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+//    SUCH DAMAGE.
+*/
+
+:root {
+    --primaryBackground: rgba(234, 238, 238, 1);
+    --secondaryBackground: rgba(98, 132, 131, 0.15);
+    --lightBackground: rgba(255, 255, 255, 1);
+    --primary: rgba(22, 128, 209, 1);
+    --valid: rgba(52, 193, 117, 1);
+    --disabledValid: rgba(52, 193, 117, 0.5);
+    --error: rgba(227, 79, 69, 1);
+    --warning: rgba(253, 127, 43, 1);
+    --darkWarning: rgba(132, 31, 0, 1);
+    --primaryText: rgba(28, 29, 39, 1);
+    --secondaryText: rgba(28, 29, 39, 0.8);
+    --warningText: rgba(253, 127, 43, 1);
+    --shadow: rgba(0, 0, 0, 0.3);
+    --white100: rgba(255, 255, 255, 1);
+}
+
+.darkmode {
+    --primaryBackground: rgba(11, 11, 12, 1);
+    --secondaryBackground: rgba(121, 144, 175, 0.18);
+    --lightBackground: rgba(53, 59, 70, 1);
+    --primary: rgba(22, 128, 209, 1);
+    --valid: rgba(52, 193, 117, 1);
+    --disabledValid: rgba(52, 193, 117, 0.5);
+    --error: rgba(227, 79, 69, 1);
+    --warning: rgba(253, 127, 43, 1);
+    --darkWarning: rgba(132, 31, 0, 1);
+    --primaryText: rgba(241, 242, 244, 1);
+    --secondaryText: rgba(241, 242, 244, 0.7);
+    --warningText: rgba(255, 170, 0, 1);
+    --shadow: rgba(0, 0, 0, 0.3);
+    --white100: rgba(255, 255, 255, 1);
+}
+
+
+html {
+    height: 100%;
+    width: 100%;
+}
+
+body {
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    height: auto;
+    width: auto;
+    margin: 0px;
+    color: var(--primaryText);
+}
+
+
+/* TEXTS */
+
+.btn,
+input[type="text"] {
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 110%;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+    margin-top: 0;
+    margin-bottom: 6px;
+    line-height: 120%;
+    color: var(--primaryText);
+}
+
+h1 {
+    font-size: 24px;
+}
+
+h2 {
+    font-size: 21px;
+}
+
+h3 {
+    font-size: 19px;
+}
+
+h4 {
+    font-size: 17px;
+}
+
+h5 {
+    font-size: 15px;
+}
+
+.block-title {
+    font-weight: 500;
+    font-size: 11px;
+    line-height: 110%;
+    text-transform: uppercase;
+    margin: 0;
+    margin-bottom: 6px;
+}
+
+p {
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 125%;
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+
+.font-current {
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 110%;
+}
+
+.font-current-details {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 110%;
+}
+
+
+/* CONTAINERS */
+
+.container {
+    height: auto;
+    padding: 22px 12px 22px 12px;
+    display: flex;
+    flex-flow: column;
+    justify-content: center;
+    align-content: center;
+}
+
+.sidepanel-container {
+    background-color: var(--primaryBackground);
+    padding: 20px;
+}
+
+.actionbar-container {
+    background-color: #0000;
+    padding: 0px;
+}
+
+.settings-container {
+    background-color: var(--primaryBackground);
+    padding: 20px;
+}
+
+.list-secondary {
+    height: auto;
+    width: auto;
+    background-color: var(--secondaryBackground);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0px;
+    border-radius: 6px;
+    padding: 5px 10px 10px 10px;
+}
+
+.list-row {
+    height: 100%;
+    width: 100%;
+    margin-top: 5px;
+    display: flex;
+    column-gap: 5px;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+.block {
+    margin-top: 16px;
+    margin-bottom: 6px;
+}
+
+/* .btn defaults to full width; side by side in a .list-row, share it evenly
+   instead. */
+.list-row > .btn {
+    width: auto;
+    flex: 1;
+}
+
+/* Message input + SEND button on one line: input grows, button stays
+   sized to its short label instead of the usual full-width .btn. */
+.message-row {
+    display: flex;
+    align-items: center;
+    column-gap: 5px;
+    margin-top: 5px;
+}
+
+.message-row input[type="text"] {
+    flex: 1;
+    height: 36px;
+    padding: 0 8px;
+    border: 0;
+    border-radius: 6px;
+    background-color: var(--secondaryBackground);
+    color: var(--primaryText);
+}
+
+.message-row .btn {
+    width: auto;
+    min-width: 0;
+    flex: 0 0 auto;
+    margin-top: 0;
+}
+
+
+/* BUTTONS */
+
+.btn {
+    width: 100%;
+    min-width: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    margin-top: 8px;
+    height: 48px;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.btn-sm {
+    height: 38px;
+    min-width: 38px;
+    font-style: normal;
+    font-size: 14px;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.btn-primary,
+.button-toggle input:checked+label.btn-secondary {
+    display: flex;
+    color: var(--white100);
+    background-color: var(--primary);
+    border: none;
+    box-shadow: 0px 2px 4px var(--shadow);
+    border-radius: 6px;
+
+}
+
+.btn-secondary,
+.button-toggle {
+    display: flex;
+    border-style: none;
+    border-radius: 6px;
+    color: var(--primaryText);
+    background-color: var(--secondaryBackground);
+}
+
+.button-toggle .btn-secondary {
+    border-radius: 0px;
+    background-color: rgb(0, 0, 0, 0);
+
+}
+
+.button-toggle .btn-secondary:active {
+    border-radius: 6px;
+}
+
+
+.btn-light,
+.button-toggle input:checked+label.label-btn-light {
+    color: var(--primaryText);
+    background-color: var(--lightBackground);
+    border: solid 0px;
+    /**border: solid 1px;
+    border-color: rgb(211, 222, 222);**/
+    box-shadow: 0px 2px 4px var(--shadow);
+}
+
+.label-btn-light {
+    color: var(--primaryText);
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.btn-danger {
+    color: white;
+    background-color: var(--error);
+    border-style: none;
+}
+
+
+.btn-warning {
+    color: white;
+    background-color: var(--warning);
+    border-style: none;
+}
+
+.btn-outline {
+    color: var(--primaryText);
+    background-color: rgba(0, 0, 0, 0);
+    border: solid 1px;
+    border-color: var(--primaryText);
+}
+
+.btn-alert {
+    color: var(--warningText);
+    background-color: var(--darkWarning);
+    border-style: none;
+}
+
+
+/* INPUT AND LABELS */
+
+label,
+.list-secondary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 0px;
+    border-radius: 6px;
+}
+
+label {
+    height: 100%;
+    width: 100%;
+    cursor: pointer;
+}
+
+.list-secondary {
+    height: 100%;
+    width: auto;
+}
+
+.input-secondary {
+    height: 36px;
+    width: auto;
+    display: flex;
+    align-items: center;
+    background-color: rgba(98, 132, 131, 0.15);
+    border: 0px;
+    border-radius: 6px;
+    column-gap: 0px;
+    padding: 0 8px 0 8px;
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+    position: absolute !important;
+    clip: rect(0, 0, 0, 0);
+    height: 1px;
+    width: 1px;
+    border: 0;
+}
+
+#input-text {
+    height: 100%;
+    width: 100%;
+    border: none;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+input[type="text"] {
+    width: 100%;
+}
+
+
+/* FLIGHT INSTRUMENTS (six-pack: settings.html has the full panel, the side
+   panel only shows numeric readouts -- too little room for 6 dials there) */
+
+.instruments-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    column-gap: 12px;
+    row-gap: 12px;
+    margin-top: 10px;
+}
+
+.sixpack-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    justify-items: center;
+    row-gap: 16px;
+    margin-top: 10px;
+}
+
+.instrument-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.instrument-label {
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--secondaryText);
+}
+
+.instrument {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+    background-color: var(--secondaryBackground);
+    box-shadow: 0px 2px 4px var(--shadow);
+}
+
+/* Artificial horizon: ball rotates with roll, slides with pitch */
+
+.horizon-ball {
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    left: -50%;
+    top: -50%;
+}
+
+.horizon-sky {
+    position: absolute;
+    width: 100%;
+    height: 50%;
+    top: 0;
+    background-color: var(--primary);
+}
+
+.horizon-ground {
+    position: absolute;
+    width: 100%;
+    height: 50%;
+    top: 50%;
+    background-color: var(--darkWarning);
+}
+
+.horizon-ladder {
+    position: absolute;
+    left: 28%;
+    width: 44%;
+    height: 1px;
+    background-color: var(--white100);
+}
+
+.horizon-ladder span {
+    position: absolute;
+    top: -5px;
+    left: -16px;
+    font-size: 8px;
+    color: var(--white100);
+}
+
+.horizon-roll-ticks {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.horizon-roll-tick {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 1px;
+    height: 6px;
+    margin-top: -3px;
+    margin-left: -0.5px;
+    background-color: var(--white100);
+    transform-origin: center;
+}
+
+.horizon-roll-tick-major {
+    width: 1.5px;
+    height: 9px;
+    margin-left: -0.75px;
+}
+
+.horizon-crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 18px;
+    color: var(--white100);
+    pointer-events: none;
+}
+
+/* Heading indicator: the graduated card rotates with yaw, a fixed lubber
+   line at the top stays put -- same as a real directional gyro (read the
+   heading off whatever number lines up with the lubber line). */
+
+.compass-card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.compass-tick {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 1px;
+    height: 6px;
+    margin-top: -3px;
+    margin-left: -0.5px;
+    background-color: var(--secondaryText);
+    transform-origin: center;
+}
+
+.compass-tick-major {
+    width: 1.5px;
+    height: 10px;
+    margin-top: -5px;
+    margin-left: -0.75px;
+    background-color: var(--primaryText);
+}
+
+/* Two levels on purpose: the anchor is a zero-size point placed on the
+   circle (same rotate+translateY trick as the ticks); the label inside it
+   is then just self-centered with translate(-50%,-50%), which works
+   correctly regardless of the text's width ("N" vs "12" vs "24"). */
+.compass-label-anchor {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+}
+
+.compass-label {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-size: 10px;
+    color: var(--primaryText);
+    white-space: nowrap;
+}
+
+.compass-label-cardinal {
+    font-weight: 700;
+}
+
+.compass-lubber {
+    position: absolute;
+    top: 3px;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 6px solid var(--error);
+    transform: translateX(-50%);
+    z-index: 1;
+}
+
+.compass-plane {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    /* The ✈ glyph renders nose-east (~90deg) in the fonts this was tested
+       with, not straight up; rotate it back so it points up, matching the
+       lubber line (both are fixed, representing the aircraft's own nose). */
+    transform: translate(-50%, -50%) rotate(-90deg);
+    font-size: 26px;
+    color: var(--primaryText);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Generic radial gauge (ground speed / altimeter / VSI): dial + needle +
+   tick marks, built once in JS then driven by rotating the needle. */
+
+.gauge {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background-color: var(--secondaryBackground);
+    box-shadow: 0px 2px 4px var(--shadow);
+}
+
+.gauge-tick {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2px;
+    height: 8px;
+    margin-top: -4px;
+    margin-left: -1px;
+    background-color: var(--secondaryText);
+    transform-origin: center;
+}
+
+.gauge-needle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 3px;
+    height: 42px;
+    margin-top: -42px;
+    margin-left: -1.5px;
+    background-color: var(--error);
+    border-radius: 2px 2px 0 0;
+    transform-origin: bottom center;
+}
+
+.gauge-hub {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--primaryText);
+    transform: translate(-50%, -50%);
+}
+
+.gauge-value {
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--primaryText);
+}
+
+/* Turn coordinator: plane banks with rate of turn (yaw rate), ball shows
+   slip/skid (lateral acceleration) -- kept as a stylized aviation homage,
+   see README for why it's not a fully accurate mapping for a quadcopter. */
+
+.tc-plane {
+    position: absolute;
+    top: 42%;
+    left: 50%;
+    /* ➤ points east by default, not up: -90deg is the resting (bank=0)
+       orientation here; updateTurnCoordinator() overrides this transform
+       once telemetry starts, keeping the same -90deg reference. */
+    transform: translate(-50%, -50%) rotate(-90deg);
+    font-size: 26px;
+    color: var(--primary);
+}
+
+.tc-ball-track {
+    position: absolute;
+    bottom: 14px;
+    left: 15%;
+    width: 70%;
+    height: 10px;
+    background-color: var(--lightBackground);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.tc-ball {
+    position: absolute;
+    top: 1px;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--primaryText);
+    transform: translateX(-50%);
+    z-index: 1;
+}
+
+/* Coordinated-flight zone: the ball should sit between these two marks. */
+
+.tc-ball-track-mark {
+    position: absolute;
+    top: 0;
+    width: 1px;
+    height: 100%;
+    background-color: var(--secondaryText);
+}
+
+.tc-ball-track-mark-left {
+    left: 40%;
+}
+
+.tc-ball-track-mark-right {
+    left: 60%;
+}
+

@@ -1,0 +1,16 @@
+api_version: 3
+kind: Mission
+metadata:
+  uid: com.parrot.missions.samples.image_classifier_advanced_cpp
+  name: image_classifier_advanced_cpp
+  description: Image classifier (advanced manual inference path) in C++ using Qualcomm NPU and ResNet50 model.
+  version: "0.0.0"
+targets:
+  Anafi UKR:
+  Anafi UKR Simulator:
+services:
+  image_classifier:
+    lang: c++
+    depends:
+      - libairsdk
+      - opencv4

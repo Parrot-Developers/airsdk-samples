@@ -1,0 +1,17 @@
+api_version: 3
+kind: Mission
+metadata:
+  uid: com.parrot.missions.samples.image_classifier_c
+  name: image_classifier_c
+  description: Image classifier example in C using Qualcomm NPU and ResNet50 model.
+  version: "0.0.0"
+targets:
+  Anafi UKR:
+  Anafi UKR Simulator:
+services:
+  image_classifier:
+    lang: c
+    depends:
+      - libairsdk
+      - libpomp
+      - libulog

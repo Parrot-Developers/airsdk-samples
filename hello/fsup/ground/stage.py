@@ -1,6 +1,6 @@
 from msghub_utils import is_msg
 from fsup.genstate import State, guidance_modes
-from fsup.utils import get_property
+from putils import get_property
 
 if get_property("ro.model", "None") == "anafi2":  # anafi2
     import colibrylite.estimation_mode_pb2 as ctl_est

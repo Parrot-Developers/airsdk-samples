@@ -1,0 +1,14 @@
+api_version: 3
+kind: Mission
+metadata:
+  uid: com.parrot.missions.samples.audio_cpp
+  name: audio_cpp
+  description: Records 5s from a USB audio device then plays it back (C++).
+  version: "0.0.0"
+targets:
+  Anafi UKR:
+services:
+  audio_service:
+    lang: c++
+    depends:
+      - libpdraw

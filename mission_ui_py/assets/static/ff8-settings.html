@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Mission UI Settings Sample</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="ff8.css" />
+</head>
+
+<body class="container settings-container">
+    <div class="block">
+        <p class="block-title">Flight Instruments</p>
+        <div class="sixpack-grid">
+            <div class="instrument-cell">
+                <div class="gauge" id="groundSpeedGauge"></div>
+                <span class="instrument-label">Ground speed</span>
+            </div>
+            <div class="instrument-cell">
+                <div class="instrument">
+                    <div class="horizon-ball" id="horizonBall">
+                        <div class="horizon-sky"></div>
+                        <div class="horizon-ground"></div>
+                    </div>
+                    <div class="horizon-roll-ticks" id="horizonRollTicks"></div>
+                    <span class="horizon-crosshair">✛</span>
+                </div>
+                <span class="instrument-label">Horizon</span>
+            </div>
+            <div class="instrument-cell">
+                <div class="gauge" id="altitudeGauge"></div>
+                <span class="instrument-label">Altimeter</span>
+            </div>
+            <div class="instrument-cell">
+                <div class="instrument">
+                    <span class="tc-plane" id="tcPlane">➤</span>
+                    <div class="tc-ball-track">
+                        <div class="tc-ball-track-mark tc-ball-track-mark-left"></div>
+                        <div class="tc-ball-track-mark tc-ball-track-mark-right"></div>
+                        <div class="tc-ball" id="tcBall"></div>
+                    </div>
+                </div>
+                <span class="instrument-label">Turn</span>
+            </div>
+            <div class="instrument-cell">
+                <div class="instrument">
+                    <div class="compass-card" id="compassCard"></div>
+                    <span class="compass-plane">✈</span>
+                    <div class="compass-lubber"></div>
+                </div>
+                <span class="instrument-label">Heading</span>
+            </div>
+            <div class="instrument-cell">
+                <div class="gauge" id="vsiGauge"></div>
+                <span class="instrument-label">VSI</span>
+            </div>
+        </div>
+    </div>
+    <div class="block">
+        <p class="block-title">Toolbox</p>
+        <div class="list-row">
+            <button class="btn btn-light" type="button" id="pingPong" onclick="onClickPingPong()">PING</button>
+            <button class="btn btn-light" type="button" id="triggerWebviews" onclick="onClickTriggerWebviews()">Trigger Webviews</button>
+        </div>
+    </div>
+    <div class="block">
+        <p class="block-title">Communication with the drone</p>
+        <div class="message-row">
+            <input type="text" id="messageInput" placeholder="Enter your message here" />
+            <button class="btn btn-light" type="button" id="sendMsg" onclick="onClickSendMsg()">SEND</button>
+        </div>
+    </div>
+
+    <!-- socket-helpers.js must load first: script.js uses WebSocketHelper at the top level. -->
+    <script src="socket-helpers.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>

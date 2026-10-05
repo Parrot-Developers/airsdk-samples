@@ -27,7 +27,7 @@
 #  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 #  SUCH DAMAGE.
 
-from fsup.utils import get_property
+from putils import get_property
 
 import numpy as np
 

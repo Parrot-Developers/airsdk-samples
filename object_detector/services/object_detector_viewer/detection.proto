@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+/*
+ * Detection metadata carried per video frame.
+ *
+ * The mission serializes a Detections message and pushes it as Air SDK stream
+ * user metadata (MetadataPublisher), keyed by a dedicated dotless metadata UID
+ * ("object_detector", not the mission UID: telemetry section names containing
+ * '.' are rejected). Air SDK embeds it in the video stream's frame metadata as
+ * a vmeta UserMetadata entry (uid_hash = Jenkins hash of that metadata UID).
+ * The pdraw viewer reads it back in its render_overlay callback (vmeta proto
+ * -> user[]) and draws the boxes over the video.
+ *
+ * Box coordinates are normalized to [0, 1] relative to the frame, so the viewer
+ * maps them to pixels with the renderer's content position.
+ */
+package ObjectDetector.Metadata;
+
+message Box {
+	float left = 1;   // normalized [0, 1], 0 = left edge
+	float top = 2;    // normalized [0, 1], 0 = top edge
+	float right = 3;  // normalized [0, 1]
+	float bottom = 4; // normalized [0, 1]
+}
+
+message Detection {
+	uint32 class_id = 1;
+	float score = 2;  // [0, 1]
+	Box box = 3;
+	string label = 4; // human-readable class name (optional)
+}
+
+message Detections {
+	repeated Detection detections = 1;
+}

@@ -34,7 +34,7 @@ from fsup.genmission import AbstractMission
 # name of an 'id' field.
 from msghub_utils import msg_id
 
-from fsup.utils import get_property
+from putils import get_property
 
 ###################################################
 # Stages and transitions

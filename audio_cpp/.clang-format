@@ -1,0 +1,33 @@
+---
+BasedOnStyle: LLVM
+AccessModifierOffset: -8
+AlignAfterOpenBracket: Align
+AlignEscapedNewlines: DontAlign
+AlignOperands: true
+AlignTrailingComments: true
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakAfterReturnType: None
+AlwaysBreakBeforeMultilineStrings: true
+BinPackArguments: false
+BinPackParameters: false
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeTernaryOperators: false
+BreakBeforeBraces: WebKit
+BreakConstructorInitializers: BeforeColon
+BreakStringLiterals: false
+ColumnLimit: 80
+ContinuationIndentWidth: 8
+ConstructorInitializerIndentWidth: 8
+IndentCaseLabels: false
+IndentPPDirectives: AfterHash
+IndentWidth: 8
+Language: Cpp
+MaxEmptyLinesToKeep: 1
+PenaltyReturnTypeOnItsOwnLine: 5000
+SortIncludes: false
+SpaceAfterCStyleCast: false
+UseTab: ForContinuationAndIndentation
+ForEachMacros: ['list_walk_forward', 'list_walk_forward_safe' ]

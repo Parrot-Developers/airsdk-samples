@@ -1,0 +1,23 @@
+api_version: 3
+kind: Mission
+metadata:
+  uid: com.parrot.missions.samples.object_detector
+  name: object_detector
+  description: Real-time object detection.
+  version: "0.0.0"
+targets:
+  Anafi UKR:
+  Anafi UKR Simulator:
+msghub:
+  - name: object_detector
+    include_path: object_detector
+services:
+  object_detector:
+    lang: c++
+    depends:
+      - msghub::object_detector
+      - libairsdk
+      - libvideo-ipc
+      - libvideo-ipc-cpp
+      - libvideo-ipc-client-config
+      - opencv4

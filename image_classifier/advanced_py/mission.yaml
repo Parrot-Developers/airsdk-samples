@@ -1,0 +1,18 @@
+api_version: 3
+kind: Mission
+metadata:
+  uid: com.parrot.missions.samples.image_classifier_advanced_py
+  name: image_classifier_advanced_py
+  description: Image classifier (advanced manual inference path) in Python using Qualcomm NPU and ResNet50 model.
+  version: "0.0.0"
+targets:
+  Anafi UKR:
+  Anafi UKR Simulator:
+pip:
+  requirements:
+    - numpy
+services:
+  image_classifier:
+    lang: python
+    depends:
+      - libairsdk-py

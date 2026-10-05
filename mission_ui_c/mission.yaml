@@ -1,0 +1,18 @@
+api_version: 3
+kind: Mission
+metadata:
+  uid: com.parrot.missions.samples.mission_ui_c
+  name: mission_ui_c
+  description: Add UI elements in FreeFlight application (C)
+  version: "0.0.0"
+targets:
+  Anafi UKR:
+  Anafi UKR Simulator:
+services:
+  webserver:
+    lang: c
+    depends:
+      - libairsdk
+      - libwebsockets
+      - json
+      - libtelemetry

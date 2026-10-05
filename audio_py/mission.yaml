@@ -1,0 +1,15 @@
+api_version: 3
+kind: Mission
+metadata:
+  uid: com.parrot.missions.samples.audio_py
+  name: audio_py
+  description: Records 5s from a USB audio device then plays it back (Python).
+  version: "0.0.0"
+targets:
+  Anafi UKR:
+pip:
+  requirements:
+    - pyalsaaudio==0.11.0
+services:
+  audio_service:
+    lang: python

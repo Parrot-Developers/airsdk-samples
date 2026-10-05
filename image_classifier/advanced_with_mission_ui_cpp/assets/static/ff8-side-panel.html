@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Image Classifier</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="ff8.css" />
+    <style>
+        .pred-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 6px;
+        }
+
+        .pred-header .block-title {
+            margin-bottom: 0;
+        }
+
+        .pred-row {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .pred-label {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .pred-bar-track {
+            height: 6px;
+            border-radius: 3px;
+            background-color: var(--secondaryBackground);
+            margin-top: 4px;
+            overflow: hidden;
+        }
+
+        .pred-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            background-color: var(--primary);
+            width: 0%;
+        }
+
+        .controls-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            column-gap: 8px;
+        }
+
+        .controls-row>div {
+            text-align: center;
+        }
+
+        /* .btn-sm has no width rule of its own; without this, buttons hug their label. */
+        .controls-row .btn-sm {
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body class="container sidepanel-container">
+
+    <div class="block">
+        <div class="pred-header">
+            <p class="block-title">Top-5 predictions</p>
+            <span class="font-current-details" id="fps"></span>
+        </div>
+        <div class="list-secondary" id="predictions">
+            <!-- One .pred-row per rank, filled in by script.js on each
+                 "classification" message. Placeholder text until the first
+                 inference result arrives. -->
+            <div class="pred-row" id="pred0">
+                <div class="pred-label">
+                    <span class="font-current" id="pred0-label">Waiting for inference…</span>
+                    <span class="font-current-details" id="pred0-score"></span>
+                </div>
+                <div class="pred-bar-track">
+                    <div class="pred-bar-fill" id="pred0-bar"></div>
+                </div>
+            </div>
+            <div class="pred-row" id="pred1">
+                <div class="pred-label">
+                    <span class="font-current" id="pred1-label"></span>
+                    <span class="font-current-details" id="pred1-score"></span>
+                </div>
+                <div class="pred-bar-track">
+                    <div class="pred-bar-fill" id="pred1-bar"></div>
+                </div>
+            </div>
+            <div class="pred-row" id="pred2">
+                <div class="pred-label">
+                    <span class="font-current" id="pred2-label"></span>
+                    <span class="font-current-details" id="pred2-score"></span>
+                </div>
+                <div class="pred-bar-track">
+                    <div class="pred-bar-fill" id="pred2-bar"></div>
+                </div>
+            </div>
+            <div class="pred-row" id="pred3">
+                <div class="pred-label">
+                    <span class="font-current" id="pred3-label"></span>
+                    <span class="font-current-details" id="pred3-score"></span>
+                </div>
+                <div class="pred-bar-track">
+                    <div class="pred-bar-fill" id="pred3-bar"></div>
+                </div>
+            </div>
+            <div class="pred-row" id="pred4">
+                <div class="pred-label">
+                    <span class="font-current" id="pred4-label"></span>
+                    <span class="font-current-details" id="pred4-score"></span>
+                </div>
+                <div class="pred-bar-track">
+                    <div class="pred-bar-fill" id="pred4-bar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="block">
+        <div class="controls-row">
+            <div>
+                <p class="block-title">Native NNs</p>
+                <button type="button" class="btn btn-sm btn-secondary" id="nativeNnsBtn"
+                    onclick="onToggleNativeNns()">Deactivate</button>
+            </div>
+            <div>
+                <p class="block-title">Inference</p>
+                <button type="button" class="btn btn-sm btn-secondary" id="inferenceBtn"
+                    onclick="onToggleInference()">Start</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- include WebSocketHelper -->
+    <script src="socket-helpers.js"></script>
+    <!-- include custom Mission UI JS Script -->
+    <script src="script.js"></script>
+</body>
+
+</html>

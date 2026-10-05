@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Mission UI Side Panel Sample</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="ff8.css" />
+</head>
+
+<body class="container sidepanel-container">
+    <div class="block">
+        <p class="block-title">Attitude</p>
+        <!-- Numeric glance info only: the full instrument panel is in
+             the settings view, which has more room for 6 dials. -->
+        <div class="list-secondary font-current">
+            <div class="list-row">
+                <span class="font-current">Roll</span>
+                <span class="font-current-details" id="roll"> </span>
+            </div>
+            <div class="list-row">
+                <span class="font-current">Pitch</span>
+                <span class="font-current-details" id="pitch"> </span>
+            </div>
+            <div class="list-row">
+                <span class="font-current">Yaw</span>
+                <span class="font-current-details" id="yaw"> </span>
+            </div>
+        </div>
+    </div>
+    <div class="block">
+        <p class="block-title">Flight</p>
+        <div class="list-secondary font-current">
+            <div class="list-row">
+                <span class="font-current">Altitude</span>
+                <span class="font-current-details" id="altitude"> </span>
+            </div>
+            <div class="list-row">
+                <span class="font-current">Ground speed</span>
+                <span class="font-current-details" id="groundSpeed"> </span>
+            </div>
+            <div class="list-row">
+                <span class="font-current">Vertical speed</span>
+                <span class="font-current-details" id="verticalSpeed"> </span>
+            </div>
+        </div>
+    </div>
+    <!-- socket-helpers.js must load first: script.js uses WebSocketHelper at the top level. -->
+    <script src="socket-helpers.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>

@@ -1,6 +1,6 @@
 from msghub_utils import msg_id
 from fsup.genmission import AbstractMission
-from fsup.utils import get_property
+from putils import get_property
 from fsup.missions.default.takeoff.stage import (
     TAKEOFF_STAGE as DEF_TAKEOFF_STAGE,
 )

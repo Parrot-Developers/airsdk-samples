@@ -1,0 +1,4 @@
+.airsdk
+/out/
+.venv/
+calib_images/

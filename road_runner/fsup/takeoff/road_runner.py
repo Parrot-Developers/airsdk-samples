@@ -41,7 +41,7 @@ from fsup.missions.default.takeoff.normal import (
 
 from fsup.missions.default.uid import UID
 
-from fsup.utils import get_property
+from putils import get_property
 
 import os
 import cfgreader
